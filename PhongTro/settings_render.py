@@ -13,6 +13,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 # Keep goiy_ai for models only (PostView, UserInteraction)
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in ['chatbot']]
 
+# Disable chatbot URLs in production
+ROOT_URLCONF = 'PhongTro.urls_render'
+
 # Render.com provides RENDER_EXTERNAL_HOSTNAME
 ALLOWED_HOSTS = [
     os.environ.get('RENDER_EXTERNAL_HOSTNAME', ''),
