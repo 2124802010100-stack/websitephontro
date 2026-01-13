@@ -1,6 +1,7 @@
 # Django và các package cơ bản
 Django>=4.2.10
 django-allauth>=0.57.0
+django-jazzmin>=2.6.0
 channels>=4.0.0
 django-widget-tweaks>=1.5.0
 django-humanize>=0.1.2
