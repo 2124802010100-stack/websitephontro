@@ -9,8 +9,9 @@ import dj_database_url
 DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 
-# Remove heavy apps for Render free tier
-INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in ['goiy_ai', 'chatbot']]
+# Remove heavy apps for Render free tier (chatbot needs torch/numpy)
+# Keep goiy_ai for models only (PostView, UserInteraction)
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in ['chatbot']]
 
 # Render.com provides RENDER_EXTERNAL_HOSTNAME
 ALLOWED_HOSTS = [

@@ -10,7 +10,16 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from website.models import RentalPost, RentalRequest, SavedPost, ChatMessage
-from goiy_ai.models import PostView, UserInteraction
+
+# Import goiy_ai models if available (may be disabled in production)
+try:
+    from goiy_ai.models import PostView, UserInteraction
+    GOIY_AI_AVAILABLE = True
+except (ImportError, RuntimeError):
+    GOIY_AI_AVAILABLE = False
+    PostView = None
+    UserInteraction = None
+
 import json
 
 
