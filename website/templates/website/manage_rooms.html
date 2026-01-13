@@ -1,0 +1,283 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load get_item %}
+
+{% block extra_head %}
+<style>
+    /* Make manage rooms page use full width */
+    .main-content { max-width: 100%; margin: 0; padding: 0; }
+</style>
+{% endblock %}
+
+{% block main-content %}
+<link rel="stylesheet" href="{% static 'css/mange_rooms.css' %}">
+
+{# Đã gỡ phần thông báo vi phạm theo yêu cầu #}
+
+<div class="header">
+    <div class="container">
+        <h1><i class="fas fa-home"></i> QUẢN LÝ PHÒNG TRỌ</h1>
+        <div class="user-info">
+
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="user-profile">
+                <p>
+                    <strong>Xin chào {{ request.user|display_name }}</strong><br>
+                    {{ request.user.username }}
+                </p>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <ul class="menu-list">
+                <li>
+                    <a href="{% url 'post_create' %}">
+                        <i class="fas fa-plus-circle"></i> Đăng tin mới
+                    </a>
+                </li>
+                <li><a href="#" class="active"><i class="fas fa-list"></i> Danh sách tin đăng</a></li>
+                <li><a href="{% url 'rental_management' %}"><i class="fas fa-handshake"></i> Quản lý thuê</a></li>
+                <li><a href="{% url 'expired_posts' %}"><i class="fas fa-clock"></i> Bài đăng hết hạn</a></li>
+                <li><a href="{% url 'recharge' %}"><i class="fas fa-credit-card"></i> Nạp tiền vào tài khoản</a></li>
+                <li><a href="{% url 'bang_gia_dich_vu' %}"><i class="fas fa-tags"></i> Bảng giá dịch vụ</a></li>
+                <li><a href="{% url 'account_settings' %}"><i class="fas fa-user-cog"></i> Quản lý tài khoản</a></li>
+                <li><a href="{% url 'deletion_logs' %}"><i class="fas fa-history"></i> Nhật ký xóa</a></li>
+                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Content Header -->
+        <div class="content-header">
+            <h2 class="content-title">Danh sách tin đăng</h2>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <a href="?status=all" class="stat-card" style="text-decoration:none; color:inherit;">
+                <div class="stat-number">{{ total_count }}</div>
+                <div class="stat-label">Tổng tin đăng</div>
+            </a>
+            <a href="?status=display" class="stat-card" style="text-decoration:none; color:inherit;">
+                <div class="stat-number">{{ display_count }}</div>
+                <div class="stat-label">Đang hiển thị</div>
+            </a>
+            <a href="?status=vacant" class="stat-card" style="text-decoration:none; color:inherit;">
+                <div class="stat-number">{{ vacant_count }}</div>
+                <div class="stat-label">Còn trống</div>
+            </a>
+            <a href="?status=pending" class="stat-card" style="text-decoration:none; color:inherit;">
+                <div class="stat-number">{{ pending_count }}</div>
+                <div class="stat-label">Đang chờ duyệt</div>
+            </a>
+            <a href="?status=rented" class="stat-card" style="text-decoration:none; color:inherit;">
+                <div class="stat-number">{{ rented_count }}</div>
+                <div class="stat-label">Đã cho thuê</div>
+            </a>
+            <a href="{% url 'expired_posts' %}" class="stat-card" style="text-decoration:none; color:inherit; background:#f59e0b;">
+                <div class="stat-number" style="color:white;">{{ expired_count }}</div>
+                <div class="stat-label" style="color:white;">Hết hạn</div>
+            </a>
+            <a href="?status=removed" class="stat-card" style="text-decoration:none; color:inherit; background:#dc2626;">
+                <div class="stat-number" style="color:white;">{{ removed_count }}</div>
+                <div class="stat-label" style="color:white;">Admin đã gỡ và từ chối</div>
+            </a>
+        </div>
+
+        <!-- Search Box -->
+        <form method="get" action="{% url 'manage_rooms' %}" class="search-box">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Tìm theo mã tin hoặc tiêu đề...">
+            <button type="submit" style="background:none; border:none; cursor:pointer;">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+
+        {% if rooms %}
+        <table class="room-table">
+            <thead>
+                <tr>
+                    <th>Tiêu đề & Địa điểm</th>
+                    <th>Giá thuê</th>
+                    <th>Ngày đăng</th>
+                    <th>Ngày hết hạn</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for room in rooms %}
+                <tr>
+                    <td>
+                        <div class="room-title"><a href="{% url 'post_detail' room.id %}">{{ room.title }}</a></div>
+                        <div class="room-location">
+                            {% if room.district %}
+                                {{ room.district.name }}
+                            {% elif room.province %}
+                                {{ room.province.name }}
+                            {% else %}
+                                Chưa cập nhật
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td><div class="room-price">{{ room.price|floatformat:0 }} triệu/tháng</div></td>
+                    <td>{{ room.created_at|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if room.expired_at %}
+                            <div class="{% if room.expired_at < now %}text-danger{% else %}text-success{% endif %}">
+                                {{ room.expired_at|date:"d/m/Y H:i" }}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">Không giới hạn</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                    <td>
+                        {% if room.is_rejected %}
+                            <span class="status-badge" style="background:#dc2626;color:#fff">❌ Bị từ chối do vi phạm</span>
+                            {% if room.rejected_at %}
+                                <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                                    {{ room.rejected_at|date:"d/m/Y H:i" }}
+                                </div>
+                            {% endif %}
+                            {% if room.rejection_reason %}
+                                <div style="font-size:11px;color:#dc2626;margin-top:4px;font-weight:500">
+                                    {{ room.rejection_reason|truncatewords:15 }}
+                                </div>
+                            {% endif %}
+                        {% elif room.is_deleted or room.was_auto_removed and not room.is_approved %}
+                            <span class="status-badge" style="background:#dc2626;color:#fff">🚫 Admin đã gỡ</span>
+                            {% if room.deleted_at %}
+                                <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                                    {{ room.deleted_at|date:"d/m/Y H:i" }}
+                                </div>
+                            {% endif %}
+                        {% elif room.expired_at and room.expired_at <= now %}
+                            <span class="status-badge" style="background:#ef4444;color:#fff">Hết hạn</span>
+                        {% elif not room.is_approved %}
+                            <span class="status-badge" style="background:#f59e0b;color:#fff">Đang duyệt</span>
+                        {% elif room.is_approved %}
+                            <span class="status-badge" style="background:#10b981;color:#fff">Đã duyệt</span>
+                        {% endif %}
+                        {% if not room.is_deleted and not room.is_rejected and room.is_approved %}
+                            {% if room.is_rented %}
+                                <span class="status-badge status-expired">Đã cho thuê</span>
+                            {% else %}
+                                <span class="status-badge status-active">Còn trống</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if room.is_rejected %}
+                                <!-- Bài bị từ chối do vi phạm: Chỉ cho XÓA -->
+                                <span style="color:#dc2626; font-weight:600; font-size:13px; display:block; margin-bottom:8px">
+                                    <i class="fas fa-ban"></i> Tin bị từ chối do vi phạm
+                                </span>
+                                <a href="{% url 'delete_room' room.id %}" class="btn-action btn-delete" title="Xóa tin đăng" onclick="return confirm('Xóa tin này?')">
+                                    <i class="fas fa-trash"></i><span style="margin-left:4px">Xóa</span>
+                                </a>
+                            {% elif room.is_deleted or room.was_auto_removed and not room.is_approved %}
+                                <!-- Bài đã bị admin gỡ: Chỉ cho xem và xóa -->
+                                <span style="color:#dc2626; font-weight:600; font-size:13px; display:block; margin-bottom:8px">
+                                    <i class="fas fa-ban"></i> Bài đã bị admin gỡ do vi phạm
+                                </span>
+                                <a href="{% url 'post_detail' room.id %}" class="btn-action btn-view" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i><span style="margin-left:4px">Xem</span>
+                                </a>
+                                <a href="{% url 'delete_room' room.id %}" class="btn-action btn-delete" title="Xóa tin đăng" onclick="return confirm('Xóa tin này?')">
+                                    <i class="fas fa-trash"></i><span style="margin-left:4px">Xóa</span>
+                                </a>
+                            {% elif room.is_rented %}
+                                <!-- Khi đã cho thuê: Không cho sửa/xóa, chỉ hiển thị cảnh báo -->
+                                <span style="color:#ef4444; font-weight:600; font-size:13px; display:block; margin-bottom:8px">
+                                    <i class="fas fa-lock"></i> Đã cho thuê - Vui lòng hủy phòng để chỉnh sửa
+                                </span>
+                            {% else %}
+                                <!-- Khi chưa cho thuê: Hiển thị đầy đủ chức năng -->
+                                <a href="{% url 'post_detail' room.id %}" class="btn-action btn-view" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i><span style="margin-left:4px">Xem</span>
+                                </a>
+                                <a href="{% url 'edit_room' room.id %}" class="btn-action btn-edit" title="Chỉnh sửa tin đăng">
+                                    <i class="fas fa-edit"></i><span style="margin-left:4px">Sửa</span>
+                                </a>
+                                <a href="{% url 'delete_room' room.id %}" class="btn-action btn-delete" title="Xóa tin đăng" onclick="return confirm('Xóa tin này?')">
+                                    <i class="fas fa-trash"></i><span style="margin-left:4px">Xóa</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                        {% endfor %}
+                        </tbody>
+                </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-home"></i>
+            </div>
+            <h3>Chưa có tin đăng</h3>
+            <p>Bạn chưa có tin đăng nào. Hãy bắt đầu đăng tin để tìm người thuê trọ.</p>
+            <a href="{% url 'post_create' %}" class="btn-add">
+                <i class="fas fa-plus"></i> Bắt đầu đăng tin
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Search functionality
+    document.querySelector('.search-box input').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        console.log('Searching for:', searchTerm);
+    });
+
+    // Filter tabs functionality
+    document.querySelectorAll('.filter-tabs a').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.filter-tabs a').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            console.log('Filter changed to:', this.textContent);
+        });
+    });
+
+    // Delete confirmation
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (!confirm('Bạn có chắc chắn muốn xóa tin đăng này?')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Toggle rented
+    document.addEventListener('click', function(e){
+        const btn = e.target.closest('[data-toggle-rented]');
+        if(!btn) return;
+        const id = btn.getAttribute('data-toggle-rented');
+        fetch(`/rooms/${id}/toggle-rented/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(async r=>{
+            let d = {};
+            try { d = await r.json(); } catch(e) {}
+            if (r.ok && d.status==='ok') {
+                location.reload();
+            } else {
+                alert(d.message || 'Không đổi được trạng thái');
+            }
+        }).catch(()=> alert('Lỗi mạng'));
+    });
+</script>
+{% endblock %}

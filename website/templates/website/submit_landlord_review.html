@@ -1,0 +1,199 @@
+{% extends 'website/base.html' %}
+{% load user_display %}
+{% load static %}
+
+{% block main-content %}
+<div class="container" style="max-width: 550px; margin: 20px auto; padding: 0 16px;">
+  <div style="background:#fff; border-radius:12px; padding:20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f3f4f6;">
+    <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #1f2937; text-align: center;">⭐ Đánh giá chủ trọ</h1>
+    <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 16px;">Chia sẻ trải nghiệm của bạn</p>
+
+    <div style="display:flex; gap:10px; align-items:center; margin-bottom:16px; padding: 12px; background: #f9fafb; border-radius:8px; border: 1px solid #e5e7eb;">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff; font-size: 16px; box-shadow: 0 2px 6px rgba(59,130,246,0.25);">
+        {% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}
+      </div>
+      <div>
+        <div style="font-weight:600; font-size: 14px; color: #111827;">{{ post.user|display_name }}</div>
+        <div style="font-size:12px;color:#6b7280; margin-top: 1px;">📍 {{ post.title|truncatechars:40 }}</div>
+      </div>
+    </div>
+
+    <form method="post" style="display:flex; flex-direction:column; gap:16px;">
+      {% csrf_token %}
+      <div>
+        <label style="font-weight:600; display:block; margin-bottom:8px; color: #374151; font-size: 14px;">⭐ Chấm điểm</label>
+        <div class="star-rating-container" style="display: flex; justify-content: center; align-items: center; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <div class="star-rating" style="display: flex; gap: 6px; font-size: 36px;">
+            {% for i in "12345" %}
+            <label class="star-label" data-value="{{ forloop.counter }}" style="cursor: pointer; transition: all 0.2s; color: #d1d5db;">
+              <input type="radio" name="rating" value="{{ forloop.counter }}" style="display: none;" {% if form.rating.value == forloop.counter|stringformat:"s" %}checked{% endif %}>
+              <span class="star-icon">★</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="rating-text" style="text-align: center; margin-top: 6px; font-size: 13px; color: #6b7280; font-weight: 500;">
+          Chọn số sao đánh giá
+        </div>
+      </div>
+
+      <div>
+        <label style="font-weight:600; display:block; margin-bottom:8px; color: #374151; font-size: 14px;">💬 Nhận xét</label>
+        <textarea name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..." style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; background: #fff; transition: all 0.3s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)';" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">{{ form.comment.value|default:'' }}</textarea>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top: 4px;">
+        <button type="submit" style="flex: 1; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; padding: 10px 20px; border-radius:8px; font-weight:600; font-size: 14px; cursor: pointer; box-shadow: 0 2px 6px rgba(59,130,246,0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(59,130,246,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(59,130,246,0.3)';">
+          ✅ Gửi đánh giá
+        </button>
+        <a href="{% url 'my_rooms' %}" style="padding: 10px 20px; border:2px solid #e5e7eb; border-radius:8px; text-decoration:none; font-weight: 600; color: #6b7280; display: flex; align-items: center; justify-content: center; transition: all 0.3s; background: #fff; font-size: 14px;" onmouseover="this.style.borderColor='#d1d5db'; this.style.color='#374151';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.color='#6b7280';">
+          Để sau
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.star-label {
+  position: relative;
+  display: inline-block;
+}
+
+.star-label .star-icon {
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.star-label:hover .star-icon {
+  transform: scale(1.2);
+  color: #fbbf24 !important;
+}
+
+.star-label input[type="radio"]:checked ~ .star-icon {
+  color: #f59e0b !important;
+}
+
+/* Hover effect - highlight all stars up to hovered star */
+.star-rating:hover .star-label .star-icon {
+  color: #d1d5db;
+}
+
+.star-rating .star-label:hover .star-icon,
+.star-rating .star-label:hover ~ .star-label .star-icon {
+  color: #d1d5db !important;
+}
+
+.star-rating .star-label:hover .star-icon {
+  color: #fbbf24 !important;
+}
+
+.star-rating .star-label:hover ~ .star-label:hover .star-icon {
+  color: #fbbf24 !important;
+}
+
+/* Selected state - fill all stars up to selected */
+.star-label.selected .star-icon,
+.star-label.selected ~ .star-label .star-icon {
+  color: #d1d5db !important;
+}
+
+.star-label.selected .star-icon {
+  color: #f59e0b !important;
+}
+
+.star-label.selected ~ .star-label.selected .star-icon {
+  color: #f59e0b !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const stars = document.querySelectorAll('.star-label');
+  const ratingText = document.querySelector('.rating-text');
+
+  const ratingTexts = {
+    1: '⭐ Rất tệ',
+    2: '⭐⭐ Tệ',
+    3: '⭐⭐⭐ Bình thường',
+    4: '⭐⭐⭐⭐ Tốt',
+    5: '⭐⭐⭐⭐⭐ Xuất sắc'
+  };
+
+  // Initial state - check if there's already a selected value
+  const checkedInput = document.querySelector('input[name="rating"]:checked');
+  if (checkedInput) {
+    updateStars(parseInt(checkedInput.value));
+  }
+
+  stars.forEach((star, index) => {
+    const input = star.querySelector('input');
+
+    // Click to select
+    star.addEventListener('click', function() {
+      const value = parseInt(this.dataset.value);
+      input.checked = true;
+      updateStars(value);
+      ratingText.textContent = ratingTexts[value];
+      ratingText.style.color = '#3b82f6';
+      ratingText.style.fontWeight = '600';
+    });
+
+    // Hover effect
+    star.addEventListener('mouseenter', function() {
+      const value = parseInt(this.dataset.value);
+      highlightStars(value);
+      ratingText.textContent = ratingTexts[value];
+    });
+  });
+
+  // Reset on mouse leave container
+  const container = document.querySelector('.star-rating');
+  container.addEventListener('mouseleave', function() {
+    const checkedInput = document.querySelector('input[name="rating"]:checked');
+    if (checkedInput) {
+      const value = parseInt(checkedInput.value);
+      updateStars(value);
+      ratingText.textContent = ratingTexts[value];
+      ratingText.style.color = '#3b82f6';
+    } else {
+      resetStars();
+      ratingText.textContent = 'Chọn số sao đánh giá';
+      ratingText.style.color = '#6b7280';
+      ratingText.style.fontWeight = '500';
+    }
+  });
+
+  function highlightStars(count) {
+    stars.forEach((star, index) => {
+      const icon = star.querySelector('.star-icon');
+      if (index < count) {
+        icon.style.color = '#fbbf24';
+      } else {
+        icon.style.color = '#d1d5db';
+      }
+    });
+  }
+
+  function updateStars(count) {
+    stars.forEach((star, index) => {
+      const icon = star.querySelector('.star-icon');
+      if (index < count) {
+        icon.style.color = '#f59e0b';
+        star.classList.add('selected');
+      } else {
+        icon.style.color = '#d1d5db';
+        star.classList.remove('selected');
+      }
+    });
+  }
+
+  function resetStars() {
+    stars.forEach(star => {
+      star.querySelector('.star-icon').style.color = '#d1d5db';
+      star.classList.remove('selected');
+    });
+  }
+});
+</script>
+{% endblock %}

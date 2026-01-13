@@ -1,0 +1,400 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load vip_tags %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'css/saved_posts.css' %}">
+{% endblock %}
+
+{% block main-content %}
+<div class="container">
+  <h1 style="margin:20px 0; font-size:1.4rem; font-weight:600; color:#333;">Phòng của tôi - Đã xác nhận thuê</h1>
+
+  {% if confirmed_requests %}
+    {% for req in confirmed_requests %}
+      {% with post=req.post %}
+      <article class="rental-card" id="confirmed-card-{{ post.id }}">
+        <section class="image-gallery">
+          {% with post.images.all|slice:":4" as images %}
+          {% with post.videos.all|slice:":4" as videos %}
+          {% with images|length|add:videos|length as total_items %}
+          {% if images|length > 0 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 1 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 2 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 3 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.3.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.3.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% for vid in videos %}
+            <div class="image-gallery-item">
+              <a href="{{ vid.video.url }}" data-lightbox="gallery{{ post.id }}" data-type="video/mp4">
+                <video muted autoplay loop>
+                  <source src="{{ vid.video.url }}" type="video/mp4">
+                </video>
+              </a>
+            </div>
+          {% endfor %}
+          {% endwith %}
+          {% endwith %}
+          {% endwith %}
+          {% if total_items > 4 %}
+            <div class="photo-count">
+              <span class="material-icons">photo</span>
+              +{{ total_items|add:-4 }}
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="content">
+          <div class="title-section">
+            <h2 class="title">
+              <a href="{% url 'post_detail' post.id %}" style="color:{% vip_style_color post.user %}">{{ post.title }}</a>
+            </h2>
+            <div class="stars">
+              {% vip_star_count post.user as stars %}
+              {% for _ in "x"|rjust:stars %}
+                <span class="material-icons">star</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="price-info">
+            <div class="price">{{ post.price|floatformat:0 }}.000.000 triệu/tháng</div>
+            <div class="area">{{ post.area }} m²</div>
+            <div class="location">{{ post.address }}</div>
+          </div>
+
+          <p class="description">{{ post.description|truncatewords:20 }}</p>
+          {% if post.features_list %}
+            <div class="mt-2 text-xs text-gray-600">
+              <strong class="block mb-1">Đặc điểm nổi bật:</strong>
+              {{ post.features_list|join:", " }}
+            </div>
+          {% endif %}
+
+          <div class="contact-row">
+            <div class="contact-info">
+              <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+              <div class="contact-details">
+                <span class="contact-name">{{ post.user|display_name }}</span>
+                 <span class="contact-time">{{ post.created_at|timesince_vi }} trước</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <button class="phone-button">
+                <span class="material-icons">phone</span>
+                096176889
+              </button>
+            </div>
+          </div>
+
+          <div class="rental-request-row" style="margin-top:16px; padding:16px; background:#ecfdf5; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05)">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+              <span class="material-icons" style="color:#10b981; font-size:24px">check_circle</span>
+              <strong style="color:#065f46; font-size:15px">Đã xác nhận thuê phòng</strong>
+            </div>
+            <div style="font-size:14px; color:#374151; margin-bottom:12px; padding-left:34px">
+              <span class="material-icons" style="font-size:16px; vertical-align:middle; color:#6b7280">schedule</span>
+              <span style="color:#3b82f6; font-weight:500">Ngày xác nhận: {{ req.updated_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if not req.has_review %}
+              <div style="padding-left:34px; margin-bottom:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <span class="material-icons" style="color:#8b5cf6;">stars</span>
+                <span style="color:#4b5563; font-size:14px;">Bạn chưa đánh giá chủ trọ cho phòng này.</span>
+                <button type="button" onclick="openReviewModal({{ req.id }}, '{{ req.post.user|display_name|escapejs }}', '{{ req.post.title|escapejs }}')" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:#fff; padding:8px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; box-shadow:0 2px 6px rgba(139,92,246,0.3);">Đánh giá chủ trọ</button>
+              </div>
+            {% endif %}
+            {% if req.cancel_request_status == 'waiting' %}
+              <div style="padding:12px 14px; margin-left:34px; background:#eff6ff; border-radius:8px; color:#1e3a8a; display:flex; align-items:center; gap:8px">
+                <i class="fas fa-hourglass-half" style="color:#2563eb"></i>
+                <div>Bạn đã gửi yêu cầu hủy phòng. Vui lòng đợi chủ trọ xử lý.</div>
+              </div>
+            {% elif req.cancel_request_status == 'rejected' %}
+              <div style="padding:12px 14px; margin-left:34px; background:#fff7ed; border-radius:8px; color:#7c2d12; display:flex; align-items:center; gap:8px; margin-bottom:10px">
+                <i class="fas fa-info-circle" style="color:#f59e0b"></i>
+                <div>Yêu cầu hủy phòng của bạn đã bị từ chối. Bạn có thể gửi lại yêu cầu.</div>
+              </div>
+              <form method="post" action="{% url 'cancel_rental_request' req.id %}" style="padding-left:34px">
+                {% csrf_token %}
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+                  <input type="text" name="cancel_reason" placeholder="Nhập lý do hủy phòng..." required style="flex:1; min-width:250px; padding:10px 14px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none; transition:all 0.3s" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                  <button type="submit" onclick="return confirm('Bạn chắc chắn muốn gửi yêu cầu hủy phòng này?')" style="background:#ef4444; color:white; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all 0.3s; box-shadow:0 2px 4px rgba(239,68,68,0.2)" onmouseover="this.style.background='#dc2626'; this.style.boxShadow='0 4px 8px rgba(239,68,68,0.3)'" onmouseout="this.style.background='#ef4444'; this.style.boxShadow='0 2px 4px rgba(239,68,68,0.2)'">
+                    <i class="fas fa-paper-plane" style="margin-right:6px"></i>Gửi yêu cầu hủy
+                  </button>
+                </div>
+              </form>
+            {% else %}
+              <form method="post" action="{% url 'cancel_rental_request' req.id %}" style="padding-left:34px">
+                {% csrf_token %}
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+                  <input type="text" name="cancel_reason" placeholder="Nhập lý do hủy phòng..." required style="flex:1; min-width:250px; padding:10px 14px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none; transition:all 0.3s" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                  <button type="submit" onclick="return confirm('Bạn chắc chắn muốn gửi yêu cầu hủy phòng này?')" style="background:#ef4444; color:white; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all 0.3s; box-shadow:0 2px 4px rgba(239,68,68,0.2)" onmouseover="this.style.background='#dc2626'; this.style.boxShadow='0 4px 8px rgba(239,68,68,0.3)'" onmouseout="this.style.background='#ef4444'; this.style.boxShadow='0 2px 4px rgba(239,68,68,0.2)'">
+                    <i class="fas fa-paper-plane" style="margin-right:6px"></i>Gửi yêu cầu hủy
+                  </button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </section>
+      </article>
+      {% endwith %}
+    {% endfor %}
+  {% else %}
+    <div style="padding:20px; background:#fff; border-radius:8px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      Bạn chưa có phòng nào đã xác nhận thuê.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
+
+<!-- Modal đánh giá chủ trọ -->
+<div id="reviewModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px);">
+  <div style="background:#fff; border-radius:12px; max-width:550px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3); position:relative;">
+    <div style="padding:20px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:1;">
+      <h2 style="font-size:20px; font-weight:700; margin:0; color:#1f2937;">⭐ Đánh giá chủ trọ</h2>
+      <button onclick="closeReviewModal()" style="background:none; border:none; font-size:28px; color:#6b7280; cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">&times;</button>
+    </div>
+
+    <div style="padding:20px;">
+      <p style="text-align:center; color:#6b7280; font-size:13px; margin-bottom:16px;">Chia sẻ trải nghiệm của bạn</p>
+
+      <div id="landlordInfo" style="display:flex; gap:10px; align-items:center; margin-bottom:16px; padding:12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+        <div id="landlordAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;box-shadow:0 2px 6px rgba(59,130,246,0.25);"></div>
+        <div>
+          <div id="landlordName" style="font-weight:600; font-size:14px; color:#111827;"></div>
+          <div id="postTitle" style="font-size:12px;color:#6b7280; margin-top:1px;"></div>
+        </div>
+      </div>
+
+      <form id="reviewForm" method="post" style="display:flex; flex-direction:column; gap:16px;" onsubmit="handleReviewSubmit(event);">
+        {% csrf_token %}
+        <input type="hidden" id="requestId" name="request_id" value="">
+
+        <div>
+          <label style="font-weight:600; display:block; margin-bottom:8px; color:#374151; font-size:14px;">⭐ Chấm điểm</label>
+          <div class="star-rating-container" style="display:flex; justify-content:center; align-items:center; padding:14px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+            <div class="star-rating" style="display:flex; gap:6px; font-size:36px;">
+              <label class="star-label" data-value="1" style="cursor:pointer; transition:all 0.2s; color:#d1d5db;">
+                <input type="radio" name="rating" value="1" style="display:none;" required>
+                <span class="star-icon">★</span>
+              </label>
+              <label class="star-label" data-value="2" style="cursor:pointer; transition:all 0.2s; color:#d1d5db;">
+                <input type="radio" name="rating" value="2" style="display:none;">
+                <span class="star-icon">★</span>
+              </label>
+              <label class="star-label" data-value="3" style="cursor:pointer; transition:all 0.2s; color:#d1d5db;">
+                <input type="radio" name="rating" value="3" style="display:none;">
+                <span class="star-icon">★</span>
+              </label>
+              <label class="star-label" data-value="4" style="cursor:pointer; transition:all 0.2s; color:#d1d5db;">
+                <input type="radio" name="rating" value="4" style="display:none;">
+                <span class="star-icon">★</span>
+              </label>
+              <label class="star-label" data-value="5" style="cursor:pointer; transition:all 0.2s; color:#d1d5db;">
+                <input type="radio" name="rating" value="5" style="display:none;">
+                <span class="star-icon">★</span>
+              </label>
+            </div>
+          </div>
+          <div class="rating-text" style="text-align:center; margin-top:6px; font-size:13px; color:#6b7280; font-weight:500;">Chọn số sao đánh giá</div>
+        </div>
+
+        <div>
+          <label style="font-weight:600; display:block; margin-bottom:8px; color:#374151; font-size:14px;">💬 Nhận xét</label>
+          <textarea name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..." style="width:100%; padding:10px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; background:#fff; transition:all 0.3s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)';" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';"></textarea>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <button type="submit" style="flex:1; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.3); transition:all 0.3s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(59,130,246,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(59,130,246,0.3)';">✅ Gửi đánh giá</button>
+          <button type="button" onclick="closeReviewModal()" style="padding:10px 20px; border:2px solid #e5e7eb; border-radius:8px; font-weight:600; color:#6b7280; background:#fff; font-size:14px; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.borderColor='#d1d5db'; this.style.color='#374151';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.color='#6b7280';">Đóng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.star-label .star-icon {
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.star-label:hover .star-icon {
+  transform: scale(1.2);
+  color: #fbbf24 !important;
+}
+.star-label.selected .star-icon {
+  color: #f59e0b !important;
+}
+</style>
+
+<script>
+function openReviewModal(requestId, landlordName, postTitle) {
+  document.getElementById('requestId').value = requestId;
+  document.getElementById('landlordName').textContent = landlordName;
+  document.getElementById('landlordAvatar').textContent = landlordName.charAt(0).toUpperCase();
+  document.getElementById('postTitle').textContent = '📍 ' + postTitle;
+
+  // Reset form
+  document.getElementById('reviewForm').reset();
+  document.querySelectorAll('.star-label').forEach(star => {
+    star.classList.remove('selected');
+    star.querySelector('.star-icon').style.color = '#d1d5db';
+  });
+  document.querySelector('.rating-text').textContent = 'Chọn số sao đánh giá';
+  document.querySelector('.rating-text').style.color = '#6b7280';
+
+  // Show modal
+  const modal = document.getElementById('reviewModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Set form action with correct URL
+  document.getElementById('reviewForm').action = '/reviews/submit/' + requestId + '/';
+}
+
+function closeReviewModal() {
+  document.getElementById('reviewModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+// Star rating functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const stars = document.querySelectorAll('#reviewModal .star-label');
+  const ratingText = document.querySelector('#reviewModal .rating-text');
+
+  const ratingTexts = {
+    1: '⭐ Rất tệ',
+    2: '⭐⭐ Tệ',
+    3: '⭐⭐⭐ Bình thường',
+    4: '⭐⭐⭐⭐ Tốt',
+    5: '⭐⭐⭐⭐⭐ Xuất sắc'
+  };
+
+  stars.forEach((star) => {
+    const input = star.querySelector('input');
+
+    star.addEventListener('click', function() {
+      const value = parseInt(this.dataset.value);
+      input.checked = true;
+      updateStars(value);
+      ratingText.textContent = ratingTexts[value];
+      ratingText.style.color = '#3b82f6';
+      ratingText.style.fontWeight = '600';
+    });
+
+    star.addEventListener('mouseenter', function() {
+      const value = parseInt(this.dataset.value);
+      highlightStars(value);
+      ratingText.textContent = ratingTexts[value];
+    });
+  });
+
+  const container = document.querySelector('#reviewModal .star-rating');
+  if (container) {
+    container.addEventListener('mouseleave', function() {
+      const checkedInput = document.querySelector('#reviewModal input[name="rating"]:checked');
+      if (checkedInput) {
+        const value = parseInt(checkedInput.value);
+        updateStars(value);
+        ratingText.textContent = ratingTexts[value];
+        ratingText.style.color = '#3b82f6';
+      } else {
+        resetStars();
+        ratingText.textContent = 'Chọn số sao đánh giá';
+        ratingText.style.color = '#6b7280';
+        ratingText.style.fontWeight = '500';
+      }
+    });
+  }
+
+  function highlightStars(count) {
+    stars.forEach((star, index) => {
+      const icon = star.querySelector('.star-icon');
+      icon.style.color = index < count ? '#fbbf24' : '#d1d5db';
+    });
+  }
+
+  function updateStars(count) {
+    stars.forEach((star, index) => {
+      const icon = star.querySelector('.star-icon');
+      if (index < count) {
+        icon.style.color = '#f59e0b';
+        star.classList.add('selected');
+      } else {
+        icon.style.color = '#d1d5db';
+        star.classList.remove('selected');
+      }
+    });
+  }
+
+  function resetStars() {
+    stars.forEach(star => {
+      star.querySelector('.star-icon').style.color = '#d1d5db';
+      star.classList.remove('selected');
+    });
+  }
+});
+
+// Close modal when clicking outside
+document.getElementById('reviewModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeReviewModal();
+  }
+});
+
+// Handle form submit for modal
+function handleReviewSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+
+  fetch(form.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      // Đóng modal và reload trang
+      closeReviewModal();
+      window.location.reload();
+    } else {
+      alert('Có lỗi xảy ra. Vui lòng thử lại.');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Có lỗi xảy ra. Vui lòng thử lại.');
+  });
+}
+</script>
+{% endblock %}

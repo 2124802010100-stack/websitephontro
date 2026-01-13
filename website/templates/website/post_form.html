@@ -1,0 +1,156 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+{% block main-content %}
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Tom Select -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- Custom CSS -->
+<link rel="stylesheet" href="{% static 'css/postform.css' %}">
+
+<div class="form-container">
+    <div class="form-header">
+        <h2><i class="fas fa-plus-circle"></i> Đăng tin mới</h2>
+        <p>Tạo tin đăng bất động sản của bạn một cách dễ dàng và nhanh chóng</p>
+    </div>
+
+    <div class="form-content">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Thông tin cơ bản
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="id_title"><i class="fas fa-heading"></i> {{ form.title.label }}</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_category"><i class="fas fa-tags"></i> {{ form.category.label }}</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_price"><i class="fas fa-dollar-sign"></i> {{ form.price.label }}</label>
+                        {{ form.price }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_area"><i class="fas fa-ruler-combined"></i> {{ form.area.label }}</label>
+                        {{ form.area }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_phone_number"><i class="fas fa-phone"></i> {{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="id_description"><i class="fas fa-align-left"></i> {{ form.description.label }}</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="id_features"><i class="fas fa-star"></i> {{ form.features.label }}</label>
+                        {{ form.features }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Vị trí
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="id_province"><i class="fas fa-map"></i> {{ form.province.label }}</label>
+                        {{ form.province|attr:"id:id_province" }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_district"><i class="fas fa-map"></i> {{ form.district.label }}</label>
+                        {{ form.district|attr:"id:id_district" }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_ward"><i class="fas fa-map"></i> {{ form.ward.label }}</label>
+                        {{ form.ward|attr:"id:id_ward" }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_street"><i class="fas fa-road"></i> {{ form.street.label }}</label>
+                        {{ form.street|attr:"id:id_street" }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_house_number"><i class="fas fa-home"></i> {{ form.house_number.label }}</label>
+                        {{ form.house_number|attr:"id:id_houseNumber" }}
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="id_address"><i class="fas fa-map-pin"></i> {{ form.address.label }}</label>
+                        {{ form.address|attr:"id:id_address" }}
+                    </div>
+                </div>
+
+                <!-- Hidden lat/lng fields -->
+                {{ form.latitude|attr:"id:id_lat" }}
+                {{ form.longitude|attr:"id:id_lng" }}
+
+                <div id="map"></div>
+            </div>
+
+            <!-- Media Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-camera"></i>
+                    Hình ảnh & Video
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fas fa-images"></i> Ảnh (có thể chọn nhiều):</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" name="image" accept="image/*" multiple id="image-input">
+                            <label for="image-input" class="file-input-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Chọn ảnh</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-video"></i> Video:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" name="video" accept="video/*" id="video-input">
+                            <label for="video-input" class="file-input-label">
+                                <i class="fas fa-video"></i>
+                                <span>Chọn video</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i> Đăng tin ngay
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Post Form JavaScript -->
+<script src="{% static 'js/post_form.js' %}"></script>
+<script>
+    // Initialize form with data URL
+    const DATA_URL = "{% static 'locations/vn_admin.json' %}?v=2";
+    document.addEventListener('DOMContentLoaded', function() {
+        initPostForm(DATA_URL);
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,584 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Tin nhắn của tôi{% endblock %}
+
+{% block main-content %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
+<div class="zalo-chats-container zalo-chats-fullwidth">
+    <div class="zalo-chats-header zalo-chats-header-fullwidth">
+        <div class="zalo-chats-header-icon">
+            <span class="material-icons">chat</span>
+        </div>
+        <div class="zalo-chats-header-content">
+            <div class="zalo-chats-header-title">Tin nhắn của tôi</div>
+            <div class="zalo-chats-header-desc">Quản lý các cuộc trò chuyện về phòng trọ</div>
+        </div>
+        <form action="{% url 'mark_all_chats_read' %}" method="post" class="zalo-chats-header-action">
+            {% csrf_token %}
+            <button type="submit" class="zalo-btn zalo-btn-done" title="Đánh dấu đã đọc tất cả">
+                <span class="material-icons">done_all</span>
+            </button>
+        </form>
+    </div>
+
+    {% if threads %}
+    <div class="zalo-chats-list zalo-chats-list-fullwidth">
+        {% for thread in threads %}
+        <div class="zalo-chat-item">
+            <div class="zalo-chat-avatar">
+                {% if request.user == thread.owner %}
+                    <span>{% with name=thread.guest.get_full_name|default:thread.guest.username %}{{ name|first|default:"?"|upper }}{% endwith %}</span>
+                {% else %}
+                    <span>{% with name=thread.owner.get_full_name|default:thread.owner.username %}{{ name|first|default:"?"|upper }}{% endwith %}</span>
+                {% endif %}
+            </div>
+            <div class="zalo-chat-content">
+                <div class="zalo-chat-title">{{ thread.post.title|truncatechars:50 }}</div>
+                <div class="zalo-chat-subtitle">
+                    {% if request.user == thread.owner %}
+                        Với {{ thread.guest.get_full_name|default:thread.guest.username }}
+                    {% else %}
+                        Với {{ thread.owner.get_full_name|default:thread.owner.username }}
+                    {% endif %}
+                </div>
+                <div class="zalo-chat-meta">
+                    <span class="zalo-chat-location">
+                        <span class="material-icons">location_on</span>
+                        {% if thread.post and thread.post.district %}
+                            {{ thread.post.district.name }}
+                        {% elif thread.post and thread.post.province %}
+                            {{ thread.post.province.name }}
+                        {% else %}
+                            Chưa xác định
+                        {% endif %}
+                    </span>
+                    <span class="zalo-chat-price">
+                        <span class="material-icons">attach_money</span>
+                        {{ thread.post.price|floatformat:0|intcomma }} đ/tháng
+                    </span>
+                </div>
+            </div>
+            <div class="zalo-chat-actions">
+                <div class="zalo-chat-time">
+                    {{ thread.updated_at|timesince }} trước
+                    {% if thread.unread_count %}
+                        <span class="zalo-unread-count">{{ thread.unread_count }}</span>
+                    {% endif %}
+                </div>
+                                <a href="{% url 'chat_thread' thread.id %}" class="zalo-btn zalo-btn-chat">
+                                    <span class="material-icons">chat</span>
+                                    Chat
+                                </a>
+                <form action="{% url 'delete_thread' thread.id %}" method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="zalo-btn zalo-btn-delete">
+                        <span class="material-icons">delete</span>
+                        Xóa
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="zalo-no-chats">
+        <span class="material-icons">chat_bubble_outline</span>
+        <div class="zalo-no-chats-title">Chưa có cuộc trò chuyện nào</div>
+        <div class="zalo-no-chats-desc">Hãy tìm phòng trọ và bắt đầu chat với chủ nhà!</div>
+        <a href="{% url 'home' %}" class="zalo-btn zalo-btn-primary">
+            <span class="material-icons">search</span>
+            Tìm phòng trọ
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Override main-content for this page */
+.main-content {
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Full Screen Layout */
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.zalo-chats-container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.zalo-chats-fullwidth {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+}
+
+/* Header Styles */
+.zalo-chats-header {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 32px 40px;
+    margin-bottom: 0;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+}
+
+.zalo-chats-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.zalo-chats-header-fullwidth {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+.zalo-chats-header-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.zalo-chats-header-icon .material-icons {
+    font-size: 32px;
+    color: #667eea;
+}
+
+.zalo-chats-header-content {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.zalo-chats-header-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.zalo-chats-header-desc {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+.zalo-chats-header-action {
+    margin-left: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.zalo-btn.zalo-btn-done {
+    background: rgba(255, 255, 255, 0.95);
+    color: #667eea;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    font-size: 20px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.zalo-btn.zalo-btn-done:hover {
+    background: #fff;
+    color: #4f46e5;
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Chat List Styles */
+.zalo-chats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #fff;
+    min-height: calc(100vh - 200px);
+    border-radius: 0 0 16px 16px;
+}
+
+.zalo-chats-list-fullwidth {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 40px 40px 40px;
+    box-sizing: border-box;
+}
+
+.zalo-chat-item {
+    background: #fff;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    padding: 24px 0;
+    gap: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.zalo-chat-item:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transform: translateX(0);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.08);
+}
+
+.zalo-chat-item:last-child {
+    border-bottom: none;
+}
+
+.zalo-chat-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    position: relative;
+}
+
+.zalo-chat-avatar::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.zalo-chat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.zalo-chat-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.zalo-chat-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.zalo-chat-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.zalo-chat-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.zalo-chat-meta .material-icons {
+    font-size: 16px;
+}
+
+.zalo-chat-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    min-width: 120px;
+}
+
+.zalo-chat-time {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.zalo-unread-count {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 3px 8px;
+    margin-left: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Button Styles */
+.zalo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.zalo-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.zalo-btn:hover::before {
+    left: 100%;
+}
+
+.zalo-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.3);
+}
+
+.zalo-btn.zalo-btn-delete {
+    background: #fff;
+    color: #ef4444;
+    border: 2px solid #ef4444;
+    padding: 8px 16px;
+    margin-top: 2px;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.1);
+}
+
+.zalo-btn.zalo-btn-delete:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
+.zalo-btn.zalo-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+
+/* No Chats Styles */
+.zalo-no-chats {
+    text-align: center;
+    padding: 60px 40px;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+    margin: 40px auto;
+    max-width: 500px;
+}
+
+.zalo-no-chats .material-icons {
+    font-size: 64px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+}
+
+.zalo-no-chats-title {
+    font-size: 1.4rem;
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.zalo-no-chats-desc {
+    color: #64748b;
+    margin-bottom: 28px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .zalo-chats-container {
+        max-width: 95%;
+    }
+
+    .zalo-chats-header-fullwidth {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .zalo-chats-list-fullwidth {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .zalo-chats-container {
+        max-width: 100%;
+        padding: 0 16px;
+    }
+
+    .zalo-chats-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 20px;
+        text-align: center;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .zalo-chats-header-fullwidth {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .zalo-chats-list-fullwidth {
+        padding-left: 20px;
+        padding-right: 20px;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .zalo-chats-header-icon {
+        margin-bottom: 12px;
+        margin-right: 0;
+        align-self: center;
+    }
+
+    .zalo-chats-header-title {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    .zalo-chats-header-desc {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .zalo-chat-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 20px 0;
+    }
+
+    .zalo-chat-actions {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+        min-width: 0;
+    }
+
+    .zalo-chat-meta {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .zalo-chat-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .zalo-chats-container {
+        padding: 0 12px;
+    }
+
+    .zalo-chats-header {
+        padding: 20px 16px;
+    }
+
+    .zalo-chats-header-fullwidth {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .zalo-chats-list-fullwidth {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .zalo-chats-header-title {
+        font-size: 1.3rem;
+    }
+
+    .zalo-chat-item {
+        padding: 16px 0;
+    }
+}
+
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Quản trị Phòng Trọ{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="icon" href="{% static 'images/Hinh-nen-den-4K_(19).jpg' %}">
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">Quản trị Phòng Trọ</a>
+  <span class="admin-subtitle">Dashboard</span>
+  </div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-modules">
+  <div class="module">
+    <h2>Thống kê nhanh</h2>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="dashboard-panel">
+        <strong>Tổng người dùng</strong><br>
+        {{ users_count }}
+      </div>
+      <div class="dashboard-panel">
+        <strong>Người dùng đang đăng nhập</strong><br>
+        {{ logged_in_count }}
+      </div>
+      <div class="dashboard-panel">
+        <strong>Tin đăng</strong><br>
+        {{ posts_count }} (đã duyệt: {{ posts_approved }})
+      </div>
+      <div class="dashboard-panel">
+        <strong>Lượt truy cập hôm nay</strong><br>
+        {{ visits_today }}
+      </div>
+      <div class="dashboard-panel">
+        <strong>Lượt truy cập 7 ngày</strong><br>
+        {{ visits_week }}
+      </div>
+    </div>
+  </div>
+</div>
+{{ block.super }}
+{% endblock %}
+
+
+

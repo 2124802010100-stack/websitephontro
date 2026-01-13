@@ -1,0 +1,18 @@
+{% extends 'website/base.html' %}
+{% block main-content %}
+<div class="container" style="max-width:900px;margin:40px auto;">
+  <div style="background:#fee2e2;border:1px solid #fecaca;color:#991b1b;padding:24px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.05);">
+    <h1 style="margin:0 0 12px 0;font-size:22px;font-weight:700;">🚫 Bài đăng đã bị admin gỡ</h1>
+    <p style="margin:0 0 10px 0;font-size:15px;line-height:1.5;">
+      Bài đăng <strong>#{{ post.id }}</strong> đã bị quản trị viên gỡ khỏi hệ thống do vi phạm hoặc không còn phù hợp.
+    </p>
+    <p style="margin:0 0 16px 0;font-size:14px;color:#7f1d1d;">
+      Nội dung chi tiết không còn khả dụng để xem công khai.
+    </p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="/" style="background:#dc2626;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">🔙 Về trang chủ</a>
+      <a href="{% url 'rental_list' %}" style="background:#1e3a8a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">🔍 Tìm tin khác</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

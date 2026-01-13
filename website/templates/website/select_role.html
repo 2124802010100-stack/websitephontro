@@ -1,0 +1,314 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chọn vai trò</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #ffffff;
+      font-family: 'Quicksand', sans-serif;
+      padding: 20px;
+    }
+
+    .role-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .role-box {
+      background: #fff;
+      padding: 30px 35px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid #e5e7eb;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .welcome-text {
+      color: #6b7280;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .role-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .role-option {
+      flex: 1;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 20px 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .role-option:hover {
+      border-color: #667eea;
+      background: #f9fafb;
+    }
+
+    .role-option input[type="radio"] {
+      display: none;
+    }
+
+    .role-option input[type="radio"]:checked + .role-content {
+      border-color: #667eea;
+      background: #f0f4ff;
+    }
+
+    .role-content {
+      border: 2px solid transparent;
+      border-radius: 6px;
+      padding: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .role-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .role-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .role-description {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      background: #2563eb;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Quicksand', sans-serif;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      margin-bottom: 0;
+    }
+
+    .alert-box {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="role-container">
+    <div class="role-box">
+      <h2>Chọn vai trò của bạn</h2>
+      <p class="welcome-text">Bạn muốn sử dụng website với vai trò nào?</p>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert-box">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="POST" id="roleForm">
+        {% csrf_token %}
+
+        <!-- Trường nhập tên hiển thị (bắt buộc) -->
+        <div class="form-group">
+          <label for="display_name" class="form-label">
+            Tên hiển thị <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="text"
+            id="display_name"
+            name="display_name"
+            required
+            placeholder="Nhập tên bạn muốn hiển thị"
+            class="form-input"
+          >
+          <p class="form-hint">
+            Tên này sẽ hiển thị ở phần "Xin chào" trên website
+          </p>
+        </div>
+
+        <!-- Trường nhập số điện thoại (bắt buộc) -->
+        <div class="form-group">
+          <label for="phone" class="form-label">
+            Số điện thoại <span style="color: #ef4444;">*</span>
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            pattern="[0-9]{10,11}"
+            placeholder="Nhập số điện thoại (10-11 chữ số)"
+            class="form-input"
+          >
+          <p class="form-hint">
+            Số điện thoại để liên hệ khi có người quan tâm phòng trọ
+          </p>
+        </div>
+
+        <div class="role-options">
+          <label class="role-option">
+            <input type="radio" name="role" value="customer" required>
+            <div class="role-content">
+              <div class="role-icon">👤</div>
+              <div class="role-title">Khách hàng</div>
+              <div class="role-description">
+                Tìm phòng trọ, đặt cọc, liên hệ chủ trọ
+              </div>
+            </div>
+          </label>
+
+          <label class="role-option">
+            <input type="radio" name="role" value="owner" required>
+            <div class="role-content">
+              <div class="role-icon">🏠</div>
+              <div class="role-title">Chủ trọ</div>
+              <div class="role-description">
+                Đăng tin cho thuê, quản lý phòng trọ
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Xác nhận</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Highlight selected option
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        document.querySelectorAll('.role-content').forEach(content => {
+          content.style.borderColor = 'transparent';
+          content.style.background = 'transparent';
+        });
+        if (this.checked) {
+          this.nextElementSibling.style.borderColor = '#667eea';
+          this.nextElementSibling.style.background = '#f0f4ff';
+        }
+      });
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+      const checked = document.querySelector('input[type="radio"]:checked');
+      if (checked) {
+        checked.nextElementSibling.style.borderColor = '#667eea';
+        checked.nextElementSibling.style.background = '#f0f4ff';
+      }
+    });
+
+    // Form validation
+    document.getElementById('roleForm').addEventListener('submit', function(e) {
+      const selected = document.querySelector('input[type="radio"]:checked');
+      const displayName = document.getElementById('display_name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+
+      let errors = [];
+
+      if (!selected) {
+        errors.push('Vui lòng chọn một vai trò');
+      }
+
+      if (!displayName) {
+        errors.push('Vui lòng nhập tên hiển thị');
+      }
+
+      if (!phone) {
+        errors.push('Vui lòng nhập số điện thoại');
+      } else if (!/^[0-9]{10,11}$/.test(phone)) {
+        errors.push('Số điện thoại phải có 10-11 chữ số');
+      }
+
+      if (errors.length > 0) {
+        e.preventDefault();
+        alert(errors.join('\n'));
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>
+

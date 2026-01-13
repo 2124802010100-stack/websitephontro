@@ -1,0 +1,1268 @@
+{% load static %}
+{% load user_display %}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhongTro.NMA - Kênh thông tin phòng trọ số 1 Việt Nam</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+
+    <!-- Font Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Gọi file CSS đã tách -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+
+    <!-- Nếu muốn override nhỏ cho modal -->
+    <style>
+      /* Bottom-sheet / modal nhỏ */
+      .loc-hidden{display:none}
+      /* Overlay và Sheet nâng z-index cao hơn navbar để không bị che */
+      .loc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:6000}
+      .loc-sheet{
+        position:fixed;left:50%;top:calc(50% + 8px);transform:translate(-50%,-50%);
+        width:min(640px,94vw);max-height:82vh;background:#fff;border-radius:12px;overflow:hidden;z-index:7000;
+        box-shadow:0 16px 40px rgba(0,0,0,.25)
+      }
+      @media (max-width:640px){
+        .loc-sheet{left:0;right:0;bottom:0;top:auto;transform:none;width:100%;max-height:88vh;border-radius:14px 14px 0 0; z-index:7000}
+      }
+      .loc-sheet-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee}
+      .loc-close{background:transparent;border:0;font-size:20px;cursor:pointer}
+      .loc-body{overflow:auto;max-height:calc(82vh - 130px)}
+      .loc-list{list-style:none;padding:0;margin:0}
+      .loc-item{border-bottom:1px solid #f4f4f4}
+      .loc-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer}
+      .loc-row:hover{background:#fafafa}
+      .loc-text{flex:1}
+      .loc-tags{padding:8px 12px}
+      .loc-tag{display:inline-block;background:#f1f5ff;color:#1e3a8a;padding:6px 10px;border-radius:999px;margin-right:6px;font-size:13px}
+      .loc-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid #eee}
+      .loc-actions{display:flex;gap:8px}
+      .loc-btn{border-radius:10px;padding:8px 14px;border:0;cursor:pointer}
+      .loc-btn.primary{background:#ff6b3d;color:#fff}
+      .loc-btn.ghost{background:#f3f4f6}
+
+      /* Nút location trong navbar (nhỏ gọn) */
+      .location-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;border:0;cursor:pointer;padding:8px}
+      .location-btn .icon{width:18px;height:18px}
+
+      /* Search filter bar hover effects */
+      #open-location-sheet:hover,
+      #open-filter-sheet:hover {
+        border-color: #3b82f6 !important;
+        background: #eff6ff !important;
+      }
+
+      /* Responsive for search form */
+      @media (max-width: 1024px) {
+        .search-filter-bar form {
+          grid-template-columns: 1fr 1fr !important;
+        }
+        .search-filter-bar form > div:nth-child(3),
+        .search-filter-bar form > div:nth-child(4) {
+          grid-column: span 1;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .search-filter-bar form {
+          grid-template-columns: 1fr !important;
+          gap: 10px !important;
+        }
+        .search-filter-bar {
+          padding: 12px 0 !important;
+        }
+      }
+
+      .filter-section{margin-bottom:18px}
+.filter-section h4{margin-bottom:10px;font-size:15px;font-weight:600}
+.filter-options{display:flex;flex-wrap:wrap;gap:8px}
+.filter-option{
+  padding:6px 14px;border:1px solid #ddd;border-radius:20px;background:#fff;
+  cursor:pointer;font-size:14px;transition:all .2s;
+}
+.filter-option.active{background:#ff6b3d;color:#fff;border-color:#ff6b3d}
+.filter-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.filter-grid-3 select{padding:6px;border:1px solid #ddd;border-radius:6px;font-size:14px}
+
+      /* ==== USER DROPDOWN (Xin chào ...) ==== */
+      .user-menu{position:relative}
+      .user-trigger{display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:transparent;border:0;padding:8px;border-radius:10px}
+      .user-trigger:hover{background:#f5f5f5}
+      .user-avatar{width:32px;height:32px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:600;color:#6b7280;position:relative}
+      .vip-dot{position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;border:2px solid #fff}
+      .vip-red{background:#ef4444}
+      .vip-blue{background:#3b82f6}
+      .vip-pink{background:#ec4899}
+      .user-name{font-weight:600}
+      .user-dropdown{position:absolute;right:0;top:calc(100% + 8px);width:320px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.15);padding:12px;display:none;z-index:1001}
+      .user-menu.open .user-dropdown{display:block}
+      .user-balance{display:flex;align-items:center;justify-content:space-between;background:#fff7ed;border:1px solid #ffedd5;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+      .user-balance .topup{background:#f97316;color:#fff;border:0;border-radius:8px;padding:6px 10px;cursor:pointer}
+      .user-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 10px}
+      .user-grid a{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:#111827;background:#f9fafb;border:1px solid #eee;border-radius:10px;padding:10px;font-size:12px}
+      .user-grid a:hover{background:#f3f4f6}
+      .user-list{list-style:none;padding:0;margin:6px 0}
+      .user-list li a{display:flex;align-items:center;gap:10px;text-decoration:none;color:#111827;padding:10px;border-radius:8px}
+      .user-list li a:hover{background:#f3f4f6}
+
+      /* ===== Footer unified palette ===== */
+      .site-footer{background:#fff7db;padding:28px 0;margin-top:32px;border-top:1px solid #f3f4f6}
+      .footer-grid{
+        display:grid;
+        grid-template-columns:repeat(7,1fr);
+        gap:16px;
+        max-width:1400px;
+        margin:0 auto;
+        padding:0 20px;
+      }
+      .footer-col h4{margin:0 0 10px 0;font-weight:700;color:#111827;font-size:13px;letter-spacing:.2px}
+      .footer-list{list-style:none;padding:0;margin:0}
+      .footer-list li{margin-bottom:4px}
+      .footer-list a{display:block;color:#2563eb;text-decoration:none;padding:3px 0;font-size:12px}
+      .footer-list a:hover{color:#1d4ed8;text-decoration:underline}
+
+      /* ===== Messages/Alerts (renamed to avoid conflict with chat messages) ===== */
+      .site-messages{
+        position:fixed;
+        top:80px;
+        right:20px;
+        z-index:9999;
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        max-width:400px;
+      }
+      .alert{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:14px 18px;
+        border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.15);
+        animation:slideInRight 0.3s ease-out;
+        font-size:14px;
+        font-weight:500;
+      }
+      .alert-success{
+        background:linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color:#065f46;
+        border:1px solid #6ee7b7;
+      }
+      .alert-error{
+        background:linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color:#991b1b;
+        border:1px solid #fca5a5;
+      }
+      .alert-warning{
+        background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color:#92400e;
+        border:none;
+      }
+      .alert-info{
+        background:linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color:#1e40af;
+        border:1px solid #93c5fd;
+      }
+      .alert-icon{
+        font-size:18px;
+        flex-shrink:0;
+      }
+      .alert-text{
+        flex:1;
+      }
+      .alert-close{
+        background:transparent;
+        border:0;
+        font-size:22px;
+        cursor:pointer;
+        color:inherit;
+        opacity:0.7;
+        padding:0;
+        width:24px;
+        height:24px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex-shrink:0;
+      }
+      .alert-close:hover{
+        opacity:1;
+      }
+      @keyframes slideInRight{
+        from{
+          transform:translateX(400px);
+          opacity:0;
+        }
+        to{
+          transform:translateX(0);
+          opacity:1;
+        }
+      }
+      @media (max-width:640px){
+        .site-messages{
+          right:10px;
+          left:10px;
+          max-width:none;
+        }
+      }
+
+      @media (max-width:1200px){
+        .footer-grid{grid-template-columns:repeat(4,1fr);gap:20px}
+      }
+      @media (max-width:968px){
+        .footer-grid{grid-template-columns:repeat(2,1fr);gap:20px}
+      }
+      @media (max-width:640px){
+        .footer-grid{grid-template-columns:1fr;gap:16px}
+        .site-footer{padding:20px 0}
+      }
+
+    </style>
+     {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-top">
+            <div class="logo-section">
+                <div class="logo-icon" id="logo-icon">NMA</div>
+                <div class="logo-text">
+                    <a href="{% url 'home'%}" class="logo">
+                        PHONGTRO<span class="red-text">.NMA</span>
+                    </a>
+                    <div class="logo-subtitle">Kênh thông tin phòng trọ số 1 Việt Nam</div>
+                </div>
+            </div>
+
+            <!-- Search/Filter Section - right after logo -->
+            <div class="navbar-search-section">
+                <!-- Nút mở modal chọn khu vực -->
+                <button id="open-location-sheet" class="location-btn" type="button" aria-haspopup="dialog">
+                  <svg class="icon" fill="currentColor" viewBox="0 0 20 20" width="18" height="18">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                  </svg>
+                  Tìm theo khu vực
+                </button>
+
+                <button id="open-filter-sheet" class="filter-btn" type="button" aria-haspopup="dialog">
+                  <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"></path>
+                  </svg>
+                  Bộ lọc
+                </button>
+            </div>
+
+            <!-- Spacer to push right side to the end -->
+            <div class="navbar-spacer"></div>
+
+            <!-- RIGHT SIDE -->
+            <div class="navbar-right">
+                <div class="divider"></div>
+
+                <div class="user-actions">
+                    {% if request.user.is_authenticated %}
+                    <div class="user-menu" id="user-menu">
+                        <button class="user-trigger" id="user-menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+                            <div class="user-avatar">
+                                👤
+                                {% if vip_active %}
+                                  <span class="vip-dot {% if vip_active.badge_color == 'red' %}vip-red{% elif vip_active.badge_color == 'blue' %}vip-blue{% elif vip_active.badge_color == 'pink' %}vip-pink{% endif %}" title="VIP đến {{ vip_active.expires_at|date:'d/m/Y H:i' }}"></span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div style="font-size:12px;color:#6b7280;line-height:1">Xin chào</div>
+                                <div class="user-name">
+                                    {% if request.user.customerprofile.display_name %}
+                                        {{ request.user.customerprofile.display_name }}
+                                    {% elif request.user|display_name %}
+                                        {{ request.user|display_name }}
+                                    {% elif request.user.username %}
+                                        {{ request.user.username }}
+                                    {% else %}
+                                        User
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="color:#6b7280;margin-left:4px">
+                              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <div class="user-dropdown" role="menu">
+                            {% if request.user.customerprofile.role == 'owner' %}
+                            <!-- Chỉ hiển thị ví tiền cho chủ trọ -->
+                            <div class="user-balance">
+                                <div>
+                                    <a href="{% url 'wallet' %}" style="text-decoration:none; color:inherit; display:block;">
+    <div style="font-size:12px;color:#6b7280">Số dư tài khoản</div>
+    <div style="font-weight:700;" id="wallet-balance">0 VNĐ</div>
+</a>
+
+                                </div>
+                                <button class="topup" type="button" onclick="window.location.href='{% url 'recharge' %}'">Nạp tiền</button>
+                            </div>
+                            {% endif %}
+
+                            <div class="user-grid">
+                                {% if vip_active %}
+                                  <div style="grid-column: 1 / -1; background:#f0f9ff; border:1px solid #e0f2fe; border-radius:10px; padding:10px; font-size:13px; display:flex; align-items:center; gap:8px;">
+                                    <span style="width:10px;height:10px;border-radius:50%; display:inline-block; background:{% if vip_active.badge_color == 'red' %}#ef4444{% elif vip_active.badge_color == 'blue' %}#3b82f6{% else %}#ec4899{% endif %}"></span>
+                                    <span><strong>VIP:</strong> {{ vip_active.get_plan_display }} • Hết hạn: {{ vip_active.expires_at|date:"d/m/Y H:i" }}</span>
+                                  </div>
+                                {% endif %}
+                            </div>
+
+                            <ul class="user-list">
+                                {% if request.user.customerprofile.role == 'owner' %}
+                                <li><a href="{% url 'owner_analytics' %}">📊 Dashboard Analytics</a></li>
+                                <li><a href="{% url 'manage_rooms' %}">🏠 Quản lý tin đăng</a></li>
+                              <li><a href="{% url 'report_history' %}">🛡️ Lịch sử báo cáo</a></li>
+                                <li><a href="{% url 'recharge_history' %}">📥 Lịch sử nạp tiền</a></li>
+                                <li><a href="{% url 'payment_history' %}">📤 Lịch sử thanh toán</a></li>
+                                <li><a href="{% url 'income_history' %}">� Lịch sử nhận tiền</a></li>
+                                {% else %}
+                                <!-- Khách hàng chỉ xem phòng đã thuê và lịch sử thanh toán đặt cọc -->
+                                <li><a href="{% url 'my_rooms' %}">🏠 Phòng đã thuê</a></li>
+                              <li><a href="{% url 'report_history' %}">🛡️ Lịch sử báo cáo</a></li>
+                                <li><a href="{% url 'payment_history' %}">📤 Lịch sử đặt cọc</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'account_settings' %}">👤 Quản lý tài khoản</a></li>
+                                <li><a href="{% url 'logout' %}">🚪 Đăng xuất</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% else %}
+                        <a href="{% url 'register' %}" class="user-link">Đăng ký</a>
+                        <a href="{% url 'login' %}" class="user-link">Đăng nhập</a>
+                    {% endif %}
+                </div>
+
+                {% if request.user.is_authenticated and request.user.customerprofile.role == 'owner' %}
+                <a href="{% url 'post_create' %}" class="post-btn">Đăng tin</a>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+  <a href="{% url 'saved_posts' %}" class="icon-btn" title="Tin đã lưu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+  </a>
+  <a href="{% url 'my_chats' %}" class="icon-btn" style="position:relative;" title="Tin nhắn">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    {% if unread_messages_count and unread_messages_count > 0 %}
+      <span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;background:#ef4444;color:#fff;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:18px;">{% if unread_messages_count > 99 %}99+{% else %}{{ unread_messages_count }}{% endif %}</span>
+    {% endif %}
+  </a>
+
+  <!-- Notifications -->
+  <div class="notif-menu" id="notif-menu" style="position:relative;">
+    <button type="button" id="notif-trigger" class="icon-btn" aria-haspopup="true" aria-expanded="false" title="Thông báo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      {% if notifications_unread_count and notifications_unread_count > 0 %}
+        <span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;background:#ef4444;color:#fff;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:18px;">{% if notifications_unread_count > 99 %}99+{% else %}{{ notifications_unread_count }}{% endif %}</span>
+      {% endif %}
+    </button>
+    <div id="notif-dropdown" style="display:none;position:absolute;right:0;top:40px;width:320px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.15);z-index:1002;overflow:hidden">
+      <div style="padding:10px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:700;color:#111827">Thông báo</div>
+        <a href="{% url 'notifications_center' %}" style="font-size:12px;color:#2563eb;text-decoration:none">Xem tất cả</a>
+      </div>
+      <ul style="list-style:none;margin:0;padding:0;max-height:360px;overflow:auto">
+        {% for n in notifications_recent %}
+          <li>
+            <a href="{% url 'notification_go' n.id %}" style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;text-decoration:none;background:{% if not n.is_read %}#f8fafc{% else %}#fff{% endif %}">
+              <span style="width:8px;height:8px;border-radius:50%;margin-top:6px;background:{% if not n.is_read %}#f59e0b{% else %}#e5e7eb{% endif %}"></span>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600;color:#111827">{{ n.title }}</div>
+                {% if n.message %}<div style="font-size:12px;color:#6b7280;margin-top:2px">{{ n.message|truncatechars:80 }}</div>{% endif %}
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px">{{ n.created_at|date:'d/m H:i' }}</div>
+              </div>
+            </a>
+          </li>
+        {% empty %}
+          <li><div style="padding:12px;color:#6b7280;font-size:13px">Không có thông báo</div></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  {% if request.resolver_match.url_name == 'home' %}
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Dark mode / Light mode">
+    🌙 Dark
+  </button>
+  {% endif %}
+{% endif %}
+            </div>
+        </div>
+
+        <div class="navbar-bottom">
+            <div class="nav-menu">
+                <a href="{% url 'post_by_category' 'phongtro' %}" class="nav-item {% if category == 'phongtro' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H4a1 1 0 0 1-1-1v-9l9-7 9 7v9a1 1 0 0 1-1 1h-5"/>
+                        <rect x="9" y="13" width="6" height="8"/>
+                    </svg>
+                    Phòng trọ
+                </a>
+                <a href="{% url 'post_by_category' 'nhanguyencan' %}" class="nav-item {% if category == 'nhanguyencan' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Nhà nguyên căn
+                </a>
+                <a href="{% url 'post_by_category' 'canho' %}" class="nav-item {% if category == 'canho' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    Căn hộ chung cư
+                </a>
+                <a href="{% url 'post_by_category' 'canho_mini' %}" class="nav-item {% if category == 'canho_mini' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="5" width="14" height="14" rx="2"/>
+                        <path d="M5 11h14M11 5v14"/>
+                    </svg>
+                    Căn hộ mini
+                </a>
+                <a href="{% url 'post_by_category' 'canho_dichvu' %}" class="nav-item {% if category == 'canho_dichvu' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2"/>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                    </svg>
+                    Căn hộ dịch vụ
+                </a>
+                <a href="{% url 'post_by_category' 'oghep' %}" class="nav-item {% if category == 'oghep' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    Ở ghép
+                </a>
+                <a href="{% url 'post_by_category' 'matbang' %}" class="nav-item {% if category == 'matbang' %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/>
+                        <path d="M3 7l9-4 9 4"/>
+                        <line x1="12" y1="3" x2="12" y2="9"/>
+                    </svg>
+                    Mặt bằng
+                </a>
+                <a href="{% url 'bang_gia_dich_vu' %}" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Bảng giá dịch vụ
+                </a>
+                <a href="{% url 'map_view' %}" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Bản Đồ
+                </a>
+            </div>
+        </div>
+    </nav>
+    <script>
+      (function(){
+        const trigger = document.getElementById('notif-trigger');
+        const menu = document.getElementById('notif-menu');
+        const dd = document.getElementById('notif-dropdown');
+        if(trigger && dd){
+          trigger.addEventListener('click', function(e){
+            e.stopPropagation();
+            dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+          });
+          document.addEventListener('click', function(){ dd.style.display = 'none'; });
+        }
+      })();
+    </script>
+    {% comment %}Messages sẽ hiển thị ở .site-messages bên dưới{% endcomment %}
+    <!-- BOTTOM-SHEET / OVERLAY (FILTER) -->
+<div id="filter-overlay" class="loc-hidden loc-overlay" aria-hidden="true"></div>
+
+<div id="filter-sheet" class="loc-hidden loc-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+  <div class="loc-sheet-header">
+    <h3 id="filter-title">Bộ lọc</h3>
+    <button id="filter-close" class="loc-close" aria-label="Đóng">✕</button>
+  </div>
+
+  <div class="loc-body" style="padding:16px">
+
+    <!-- Danh mục -->
+    <div class="filter-section">
+      <h4>Danh mục cho thuê</h4>
+      <div class="filter-options">
+        <button class="filter-option" data-type="phongtro">Phòng trọ</button>
+        <button class="filter-option" data-type="nhanguyencan">Nhà riêng</button>
+        <button class="filter-option" data-type="oghep">Ở ghép</button>
+        <button class="filter-option" data-type="matbang">Mặt bằng</button>
+        <button class="filter-option" data-type="canho">Căn hộ chung cư</button>
+        <button class="filter-option" data-type="canho_mini">Căn hộ mini</button>
+        <button class="filter-option" data-type="canho_dichvu">Căn hộ dịch vụ</button>
+      </div>
+    </div>
+
+    <!-- Khu vực -->
+    <div class="filter-section">
+      <h4>Lọc theo khu vực</h4>
+      <div class="filter-grid-3">
+        <select id="filter-province">
+          <option value="">Toàn quốc</option>
+        </select>
+        <select id="filter-district">
+          <option value="">Quận huyện</option>
+        </select>
+        <select id="filter-ward">
+          <option value="">Phường xã</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Giá -->
+    <div class="filter-section">
+      <h4>Khoảng giá</h4>
+      <div class="filter-options">
+        <button class="filter-option" data-price="">Tất cả</button>
+        <button class="filter-option" data-price="0-1000000">Dưới 1 triệu</button>
+        <button class="filter-option" data-price="1000000-2000000">1 - 2 triệu</button>
+        <button class="filter-option" data-price="2000000-3000000">2 - 3 triệu</button>
+        <button class="filter-option" data-price="3000000-5000000">3 - 5 triệu</button>
+        <button class="filter-option" data-price="5000000-7000000">5 - 7 triệu</button>
+        <button class="filter-option" data-price="7000000-10000000">7 - 10 triệu</button>
+        <button class="filter-option" data-price="10000000-15000000">10 - 15 triệu</button>
+        <button class="filter-option" data-price="15000000-999999999">Trên 15 triệu</button>
+      </div>
+    </div>
+
+    <!-- Diện tích -->
+    <div class="filter-section">
+      <h4>Khoảng diện tích</h4>
+      <div class="filter-options">
+        <button class="filter-option" data-area="">Tất cả</button>
+        <button class="filter-option" data-area="0-20">Dưới 20m²</button>
+        <button class="filter-option" data-area="20-30">Từ 20m² - 30m²</button>
+        <button class="filter-option" data-area="30-50">Từ 30m² - 50m²</button>
+        <button class="filter-option" data-area="50-70">Từ 50m² - 70m²</button>
+        <button class="filter-option" data-area="70-90">Từ 70m² - 90m²</button>
+        <button class="filter-option" data-area="90-9999">Trên 90m²</button>
+      </div>
+    </div>
+
+    <!-- Đặc điểm nổi bật -->
+    <div class="filter-section">
+      <h4>Đặc điểm nổi bật</h4>
+      <div class="filter-options">
+        <button class="filter-option" data-feature="day_du_noi_that">Đầy đủ nội thất</button>
+<button class="filter-option" data-feature="co_gac">Có gác</button>
+<button class="filter-option" data-feature="co_ke_bep">Kệ bếp</button>
+<button class="filter-option" data-feature="co_may_lanh">Có máy lạnh</button>
+<button class="filter-option" data-feature="co_may_giat">Có máy giặt</button>
+<button class="filter-option" data-feature="co_tu_lanh">Có tủ lạnh</button>
+<button class="filter-option" data-feature="co_thang_may">Có thang máy</button>
+<button class="filter-option" data-feature="khong_chung_chu">Không chung chủ</button>
+<button class="filter-option" data-feature="gio_giac_tu_do">Giờ giấc tự do</button>
+<button class="filter-option" data-feature="bao_ve_24_24">Có bảo vệ 24/24</button>
+<button class="filter-option" data-feature="co_ham_de_xe">Có hầm để xe</button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loc-footer">
+    <div class="loc-actions" style="width:100%">
+      <button id="filter-reset" class="loc-btn ghost" type="button" style="flex:1">Xoá lọc</button>
+      <button id="filter-apply" class="loc-btn primary" type="button" style="flex:2">Áp dụng</button>
+    </div>
+  </div>
+</div>
+
+
+    <!-- BOTTOM-SHEET / OVERLAY (PLACE ON PAGE, JS sẽ toggle) -->
+    <div id="loc-overlay" class="loc-hidden loc-overlay" aria-hidden="true"></div>
+
+    <div id="loc-sheet" class="loc-hidden loc-sheet" role="dialog" aria-modal="true" aria-labelledby="loc-title">
+      <div class="loc-sheet-header">
+        <h3 id="loc-title">Tìm theo khu vực</h3>
+        <button id="loc-close" class="loc-close" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="loc-body">
+        <div id="level-provinces" class="loc-level">
+          <ul id="province-list" class="loc-list"></ul>
+        </div>
+
+        <div id="level-districts" class="loc-level loc-hidden">
+          <ul id="district-list" class="loc-list"></ul>
+        </div>
+
+        <div id="level-wards" class="loc-level loc-hidden">
+          <ul id="ward-list" class="loc-list"></ul>
+        </div>
+      </div>
+
+      <div class="loc-footer">
+        <div id="loc-tags" class="loc-tags"></div>
+        <div class="loc-actions">
+          <button id="loc-reset" class="loc-btn ghost" type="button">Xoá chọn</button>
+          <button id="loc-apply" class="loc-btn primary" type="button">Áp dụng</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- Messages notification (hidden on chat pages) -->
+{% if messages and request.resolver_match.url_name != 'chat_thread' and request.resolver_match.url_name != 'my_chats' %}
+    <div class="site-messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <span class="alert-icon">
+                        {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% elif message.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+                    </span>
+                    <span class="alert-text">{{ message }}</span>
+                    <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <main class="main-content">
+        {% block main-content %}
+        <div class="welcome-section">
+            <h1 class="welcome-title">Tìm phòng trọ dễ dàng</h1>
+            <p class="welcome-subtitle">Khám phá hàng ngàn căn hộ, phòng trọ chất lượng với giá cả phải chăng</p>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Tìm kiếm theo địa chỉ, quận huyện...">
+                <button class="search-btn">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <!-- cards ... -->
+        </div>
+        {% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>PHÒNG TRỌ, NHÀ TRỌ</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=phongtro">Phòng trọ {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>THUÊ NHÀ NGUYÊN CĂN</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=nhanguyencan">Thuê nhà {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>CHO THUÊ CĂN HỘ</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=canho">Thuê căn hộ {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>CĂN HỘ MINI</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=canho_mini">Căn hộ mini {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>CĂN HỘ DỊCH VỤ</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=canho_dichvu">Căn hộ dịch vụ {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>TÌM NGƯỜI Ở GHÉP</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=oghep">Ở ghép {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>MẶT BẰNG - VĂN PHÒNG</h4>
+          <ul class="footer-list">
+          {% for p in footer_provinces %}
+            <li><a href="{% url 'rental_list' %}?province={{ p.id }}&type=matbang">Mặt bằng {{ p.name }}</a></li>
+          {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const URL = {
+    provinces: "{% url 'ajax_load_provinces' %}",
+    districts: "{% url 'ajax_load_districts' %}",
+    wards:     "{% url 'ajax_load_wards' %}",
+    rental:    "{% url 'rental_list' %}"
+  };
+  // ===== LOCATION SHEET =====
+  const openBtn = document.getElementById('open-location-sheet');
+  const overlay = document.getElementById('loc-overlay');
+  const sheet = document.getElementById('loc-sheet');
+  const closeBtn = document.getElementById('loc-close');
+  const provinceList = document.getElementById('province-list');
+  const districtList = document.getElementById('district-list');
+  const wardList = document.getElementById('ward-list');
+  const tagsBox = document.getElementById('loc-tags');
+  const applyBtn = document.getElementById('loc-apply');
+  const resetBtn = document.getElementById('loc-reset');
+
+  let selProvince = null, selDistrict = null, selWard = null;
+
+  function openSheet(){
+    overlay.classList.remove('loc-hidden');
+    sheet.classList.remove('loc-hidden');
+    loadProvinces(); showLevel('province'); renderTags();
+  }
+  function closeSheet(){
+    overlay.classList.add('loc-hidden');
+    sheet.classList.add('loc-hidden');
+  }
+  openBtn && openBtn.addEventListener('click', openSheet);
+  overlay.addEventListener('click', closeSheet);
+  closeBtn.addEventListener('click', closeSheet);
+
+  function showLevel(level){
+    document.getElementById('level-provinces').classList.toggle('loc-hidden', level !== 'province');
+    document.getElementById('level-districts').classList.toggle('loc-hidden', level !== 'district');
+    document.getElementById('level-wards').classList.toggle('loc-hidden', level !== 'ward');
+  }
+
+  function renderTags(){
+    tagsBox.innerHTML = '';
+    if(selProvince){
+      const el = document.createElement('span'); el.className='loc-tag'; el.textContent = selProvince.name; tagsBox.appendChild(el);
+    }
+    if(selDistrict){
+      const el = document.createElement('span'); el.className='loc-tag'; el.textContent = selDistrict.name; tagsBox.appendChild(el);
+    }
+    if(selWard){
+      const el = document.createElement('span'); el.className='loc-tag'; el.textContent = selWard.name; tagsBox.appendChild(el);
+    }
+  }
+
+  function loadProvinces(){
+    provinceList.innerHTML = '<li class="loc-item"><div class="loc-row">Đang tải...</div></li>';
+    $.getJSON(URL.provinces, {}, function(data){
+      provinceList.innerHTML = '';
+      data.forEach(function(p){
+        const li = document.createElement('li'); li.className='loc-item';
+        li.innerHTML = '<div class="loc-row" data-id="'+p.id+'" data-name="'+p.name+'"><span class="loc-text">'+p.name+'</span><span class="loc-arrow">›</span></div>';
+        provinceList.appendChild(li);
+      });
+    });
+  }
+  function loadDistricts(provinceId){
+    districtList.innerHTML = '<li class="loc-item"><div class="loc-row">Đang tải...</div></li>';
+    $.getJSON(URL.districts, {province_id:provinceId}, function(data){
+      districtList.innerHTML = '';
+      data.forEach(function(d){
+        const li = document.createElement('li'); li.className='loc-item';
+        li.innerHTML = '<div class="loc-row" data-id="'+d.id+'" data-name="'+d.name+'"><span class="loc-text">'+d.name+'</span><span class="loc-arrow">›</span></div>';
+        districtList.appendChild(li);
+      });
+      showLevel('district');
+    });
+  }
+  function loadWards(districtId){
+    wardList.innerHTML = '<li class="loc-item"><div class="loc-row">Đang tải...</div></li>';
+    $.getJSON(URL.wards, {district_id:districtId}, function(data){
+      wardList.innerHTML = '';
+      data.forEach(function(w){
+        const li = document.createElement('li'); li.className='loc-item';
+        li.innerHTML = '<div class="loc-row" data-id="'+w.id+'" data-name="'+w.name+'"><span class="loc-text">'+w.name+'</span></div>';
+        wardList.appendChild(li);
+      });
+      showLevel('ward');
+    });
+  }
+
+  provinceList.addEventListener('click', function(e){
+    const row = e.target.closest('.loc-row'); if(!row) return;
+    const id = row.dataset.id, name = row.dataset.name;
+    selProvince = {id:id, name:name}; selDistrict = selWard = null;
+    renderTags(); loadDistricts(id);
+  });
+  districtList.addEventListener('click', function(e){
+    const row = e.target.closest('.loc-row'); if(!row) return;
+    const id = row.dataset.id, name = row.dataset.name;
+    selDistrict = {id:id, name:name}; selWard = null;
+    renderTags(); loadWards(id);
+  });
+  wardList.addEventListener('click', function(e){
+    const row = e.target.closest('.loc-row'); if(!row) return;
+    const id = row.dataset.id, name = row.dataset.name;
+    selWard = {id:id, name:name}; renderTags();
+  });
+
+  resetBtn.addEventListener('click', function(){
+    selProvince = selDistrict = selWard = null;
+    loadProvinces(); showLevel('province'); renderTags();
+  });
+
+  applyBtn.addEventListener('click', function(){
+    // Build URL with location parameters
+    let url = URL.rental + '?';
+    let params = [];
+
+    if (selProvince) params.push('province=' + selProvince.id);
+    if (selDistrict) params.push('district=' + selDistrict.id);
+    if (selWard) params.push('ward=' + selWard.id);
+
+    if (params.length > 0) {
+      url += params.join('&');
+      window.location.href = url;
+    } else {
+      closeSheet();
+    }
+});
+
+  // ===== FILTER SHEET =====
+  const fOpenBtn = document.getElementById('open-filter-sheet');
+  const fOverlay = document.getElementById('filter-overlay');
+  const fSheet = document.getElementById('filter-sheet');
+  const fCloseBtn = document.getElementById('filter-close');
+  const fApplyBtn = document.getElementById('filter-apply');
+  const fResetBtn = document.getElementById('filter-reset');
+
+  let selected = {type:"", price:"", area:"", features:[]};
+
+  function openFilter(){ fOverlay.classList.remove('loc-hidden'); fSheet.classList.remove('loc-hidden'); }
+  function closeFilter(){ fOverlay.classList.add('loc-hidden'); fSheet.classList.add('loc-hidden'); }
+  fOpenBtn && fOpenBtn.addEventListener('click', openFilter);
+  fOverlay.addEventListener('click', closeFilter);
+  fCloseBtn.addEventListener('click', closeFilter);
+
+  // ✅ Toggle chọn option — sửa lại dùng hasAttribute để phân loại đúng
+  document.querySelectorAll('.filter-option').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      let key = null;
+      if (this.hasAttribute('data-type')) key = 'type';
+      else if (this.hasAttribute('data-price')) key = 'price';
+      else if (this.hasAttribute('data-area')) key = 'area';
+      else if (this.hasAttribute('data-feature')) key = 'features';
+
+      if(key === 'features'){
+        this.classList.toggle('active');
+        const val = this.getAttribute('data-feature');
+        if(this.classList.contains('active')){
+          if (!selected.features.includes(val)) selected.features.push(val);
+        } else {
+          selected.features = selected.features.filter(f => f !== val);
+        }
+      } else if (key){
+        // bỏ active cùng nhóm
+        document.querySelectorAll('.filter-option[data-'+key+']').forEach(b=>b.classList.remove('active'));
+        this.classList.add('active');
+        const v = this.getAttribute('data-'+key);
+        selected[key] = (v === null ? "" : v);
+      }
+    });
+  });
+
+  fResetBtn.addEventListener('click', function(){
+    document.querySelectorAll('.filter-option').forEach(b=>b.classList.remove('active'));
+    selected = {type:"", price:"", area:"", features:[]};
+  });
+
+  fApplyBtn.addEventListener('click', function(){
+    // Build URL with filter parameters
+    let url = URL.rental + '?';
+    let params = [];
+
+    // Get location values
+    const filterProvince = document.getElementById('filter-province');
+    const filterDistrict = document.getElementById('filter-district');
+    const filterWard = document.getElementById('filter-ward');
+
+    if (filterProvince && filterProvince.value) params.push('province=' + filterProvince.value);
+    if (filterDistrict && filterDistrict.value) params.push('district=' + filterDistrict.value);
+    if (filterWard && filterWard.value) params.push('ward=' + filterWard.value);
+
+    if (selected.type) params.push('type=' + selected.type);
+    if (selected.price) params.push('price=' + selected.price);
+    if (selected.area) params.push('area=' + selected.area);
+
+    // Add features
+    selected.features.forEach(f => {
+      params.push('features=' + f);
+    });
+
+    // Redirect to rental list with filters
+    if (params.length > 0) {
+      url += params.join('&');
+      window.location.href = url;
+    } else {
+      closeFilter();
+    }
+  });
+
+}); // DOMContentLoaded
+
+// ===== FILTER SHEET LOCATION DROPDOWNS =====
+document.addEventListener('DOMContentLoaded', function(){
+  const filterProvince = document.getElementById('filter-province');
+  const filterDistrict = document.getElementById('filter-district');
+  const filterWard = document.getElementById('filter-ward');
+
+  // Load provinces vào filter-province
+  function loadFilterProvinces(){
+    if(!filterProvince) return;
+    filterProvince.innerHTML = '<option value="">Toàn quốc</option>';
+    $.getJSON(URL.provinces, {}, function(data){
+      data.forEach(function(p){
+        filterProvince.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+      });
+    });
+  }
+
+  // Load districts khi chọn province
+  function loadFilterDistricts(provinceId){
+    if(!filterDistrict || !filterWard) return;
+    filterDistrict.innerHTML = '<option value="">Quận huyện</option>';
+    filterWard.innerHTML = '<option value="">Phường xã</option>';
+
+    if(!provinceId) return;
+
+    $.getJSON(URL.districts, {province_id: provinceId}, function(data){
+      data.forEach(function(d){
+        filterDistrict.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+      });
+    });
+  }
+
+  // Load wards khi chọn district
+  function loadFilterWards(districtId){
+    if(!filterWard) return;
+    filterWard.innerHTML = '<option value="">Phường xã</option>';
+
+    if(!districtId) return;
+
+    $.getJSON(URL.wards, {district_id: districtId}, function(data){
+      data.forEach(function(w){
+        filterWard.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+      });
+    });
+  }
+
+  // Event listeners
+  if(filterProvince) {
+    filterProvince.addEventListener('change', function(){
+      loadFilterDistricts(this.value);
+    });
+  }
+
+  if(filterDistrict) {
+    filterDistrict.addEventListener('change', function(){
+      loadFilterWards(this.value);
+    });
+  }
+
+  // Load provinces khi trang load
+  loadFilterProvinces();
+});
+// ===== FILTER SHEET LOCATION DROPDOWNS (Fetch API version) =====
+document.addEventListener("DOMContentLoaded", function () {
+  const provinceSelect = document.getElementById("filter-province");
+  const districtSelect = document.getElementById("filter-district");
+  const wardSelect = document.getElementById("filter-ward");
+
+  // Load tỉnh/thành khi trang mở
+  fetch("{% url 'ajax_load_provinces' %}")
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.name;
+        provinceSelect.appendChild(opt);
+      });
+    });
+
+  // Khi chọn tỉnh => load quận/huyện
+  provinceSelect.addEventListener("change", function () {
+    districtSelect.innerHTML = '<option value="">Quận huyện</option>';
+    wardSelect.innerHTML = '<option value="">Phường xã</option>';
+
+    if (this.value) {
+      fetch(`{% url 'ajax_load_districts' %}?province_id=${this.value}`)
+        .then(res => res.json())
+        .then(data => {
+          data.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = item.name;
+            districtSelect.appendChild(opt);
+          });
+        });
+    }
+  });
+
+  // Khi chọn quận => load phường/xã
+  districtSelect.addEventListener("change", function () {
+    wardSelect.innerHTML = '<option value="">Phường xã</option>';
+
+    if (this.value) {
+      fetch(`{% url 'ajax_load_wards' %}?district_id=${this.value}`)
+        .then(res => res.json())
+        .then(data => {
+          data.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = item.name;
+            wardSelect.appendChild(opt);
+          });
+        });
+    }
+  });
+});
+
+// ===== USER MENU TOGGLE =====
+document.addEventListener('DOMContentLoaded', function(){
+  const menu = document.getElementById('user-menu');
+  const trigger = document.getElementById('user-menu-trigger');
+  if(!menu || !trigger) return;
+  function close(){ menu.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); }
+  function toggle(){ const open = menu.classList.toggle('open'); trigger.setAttribute('aria-expanded', String(open)); }
+  trigger.addEventListener('click', function(e){ e.stopPropagation(); toggle(); });
+  document.addEventListener('click', function(e){ if(!menu.contains(e.target)) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+});
+
+// ===== LOAD WALLET BALANCE =====
+document.addEventListener('DOMContentLoaded', function(){
+  {% if request.user.is_authenticated %}
+  fetch('{% url "get_wallet_balance" %}')
+    .then(response => response.json())
+    .then(data => {
+      const balanceElement = document.getElementById('wallet-balance');
+      if (balanceElement) {
+        balanceElement.textContent = data.formatted_balance;
+      }
+    })
+    .catch(error => {
+      console.error('Error loading wallet balance:', error);
+    });
+  {% endif %}
+});
+// ===== THEME TOGGLE (Dark/Light) =====
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('theme-toggle');
+  const setTheme = (theme)=>{
+    document.body.setAttribute('data-theme', theme);
+    try{ localStorage.setItem('theme', theme); }catch(e){}
+    if(btn){
+      // Show simple icon only, per request
+      if(theme === 'dark') btn.textContent = '☀️';
+      else btn.textContent = '🌙';
+    }
+  };
+
+  // Restore saved preference
+  let saved = 'light';
+  try{ saved = localStorage.getItem('theme') || 'light'; }catch(e){}
+  setTheme(saved);
+
+  btn && btn.addEventListener('click', function(){
+    const next = (document.body.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+    setTheme(next);
+  });
+});
+</script>
+{% block extra_scripts %}{% endblock %}
+
+<!-- Chatbot Widget -->
+{% include 'chatbot/chatbot_widget.html' %}
+
+<!-- Floating Social Buttons - Global -->
+<div id="floating-social-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; align-items: center;">
+    <!-- Chatbot Button -->
+    <div id="chatbot-floating-btn" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); cursor: pointer; transition: all 0.3s;">
+        <i class="fas fa-robot" style="font-size: 24px; color: white;"></i>
+    </div>
+
+    <!-- Zalo Button -->
+    <a href="https://zalo.me/0389895755" target="_blank" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #0068FF 0%, #0180F5 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(1, 128, 245, 0.4); transition: all 0.3s; text-decoration: none;">
+        <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+            <path d="M24 4C12.96 4 4 12.08 4 22.24C4 27.68 6.72 32.56 10.96 35.84V44L18.4 40C20.16 40.48 22.04 40.72 24 40.72C35.04 40.72 44 32.64 44 22.48C44 12.32 35.04 4 24 4Z" fill="white"/>
+            <path d="M24 37.52C22.24 37.52 20.56 37.28 18.96 36.88L12.96 40V34.24C9.36 31.44 7.04 27.12 7.04 22.24C7.04 13.76 14.64 6.88 24 6.88C33.36 6.88 40.96 13.76 40.96 22.24C40.96 30.72 33.36 37.52 24 37.52Z" fill="#0068FF"/>
+            <path d="M17.2 26.4L13.6 21.2L18.4 24L20.8 17.6L28 26.4L23.2 23.6L20.8 30L17.2 26.4Z" fill="white"/>
+        </svg>
+    </a>
+
+    <!-- Facebook Button -->
+    <a href="https://www.facebook.com/minh.anh.546741/?locale=vi_VN" target="_blank" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #1877F2 0%, #0C63D4 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4); transition: all 0.3s; text-decoration: none;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+    </a>
+</div>
+
+<style>
+/* Floating Social Buttons Styles */
+#floating-social-container > * {
+    transition: all 0.3s ease;
+}
+
+#floating-social-container > *:hover {
+    transform: translateY(-4px) scale(1.05);
+}
+
+#chatbot-floating-btn:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
+}
+
+a[href*="zalo.me"]:hover {
+    box-shadow: 0 6px 20px rgba(1, 128, 245, 0.5) !important;
+}
+
+a[href*="facebook.com"]:hover {
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #floating-social-container {
+        bottom: 15px !important;
+        right: 15px !important;
+        gap: 10px !important;
+    }
+
+    #floating-social-container > * {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    #floating-social-container svg,
+    #floating-social-container i {
+        font-size: 20px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #floating-social-container {
+        bottom: 12px !important;
+        right: 12px !important;
+        gap: 8px !important;
+    }
+
+    #floating-social-container > * {
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    #floating-social-container svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    #floating-social-container i {
+        font-size: 18px !important;
+    }
+}
+</style>
+
+<script>
+// Chatbot floating button handler
+document.addEventListener('DOMContentLoaded', function() {
+    const chatbotBtn = document.getElementById('chatbot-floating-btn');
+    const chatbotWidget = document.getElementById('chatbot-widget');
+    const chatbotToggle = document.getElementById('chatbot-toggle');
+    const closeBtn = document.getElementById('close-chatbot');
+    const floatingContainer = document.getElementById('floating-social-container');
+
+    if (chatbotBtn && chatbotWidget && floatingContainer) {
+        // Khi click nút chatbot -> mở chat và ẩn 3 nút
+        chatbotBtn.addEventListener('click', function() {
+            chatbotWidget.classList.remove('hidden');
+            chatbotWidget.classList.add('visible');
+            floatingContainer.style.display = 'none'; // Ẩn cả 3 nút
+            if (chatbotToggle) {
+                chatbotToggle.style.display = 'none';
+            }
+        });
+
+        // Khi click nút X -> đóng chat và hiện lại 3 nút
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                chatbotWidget.classList.add('hidden');
+                chatbotWidget.classList.remove('visible');
+                floatingContainer.style.display = 'flex'; // Hiện lại 3 nút
+            });
+        }
+    }
+
+    // Clear login lockout when user is authenticated
+    {% if user.is_authenticated %}
+        localStorage.removeItem('login_attempts');
+        localStorage.removeItem('lockout_until');
+    {% endif %}
+
+    // Auto-hide messages after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    });
+});
+
+// Add slideOut animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>

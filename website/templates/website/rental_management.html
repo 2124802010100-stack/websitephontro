@@ -1,0 +1,209 @@
+{% extends "website/base.html" %}
+{% load get_item %}
+{% load user_display %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    /* Make page use full width */
+    .main-content { max-width: 100%; margin: 0; padding: 0; }
+</style>
+{% endblock %}
+
+{% block main-content %}
+<link rel="stylesheet" href="{% static 'css/mange_rooms.css' %}">
+<div class="header">
+  <div class="container">
+    <h1><i class="fas fa-handshake"></i> QUẢN LÝ THUÊ</h1>
+  </div>
+</div>
+<div class="main-container">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="user-profile">
+        <p><strong>Xin chào {{ request.user|display_name }}</strong><br>{{ request.user.username }}</p>
+      </div>
+    </div>
+    <div class="sidebar-menu">
+      <ul class="menu-list">
+        <li><a href="{% url 'post_create' %}"><i class="fas fa-plus-circle"></i> Đăng tin mới</a></li>
+        <li><a href="{% url 'manage_rooms' %}"><i class="fas fa-list"></i> Danh sách tin đăng</a></li>
+        <li><a href="{% url 'rental_management' %}" class="active"><i class="fas fa-handshake"></i> Quản lý thuê</a></li>
+        <li><a href="{% url 'expired_posts' %}"><i class="fas fa-clock"></i> Bài đăng hết hạn</a></li>
+        <li><a href="{% url 'recharge' %}"><i class="fas fa-credit-card"></i> Nạp tiền vào tài khoản</a></li>
+        <li><a href="{% url 'bang_gia_dich_vu' %}"><i class="fas fa-tags"></i> Bảng giá dịch vụ</a></li>
+        <li><a href="{% url 'account_settings' %}"><i class="fas fa-user-cog"></i> Quản lý tài khoản</a></li>
+        <li><a href="{% url 'deletion_logs' %}"><i class="fas fa-history"></i> Nhật ký xóa</a></li>
+        <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="content">
+    <div class="content-header">
+      <h2 class="content-title">Yêu cầu thuê trọ</h2>
+    </div>
+    {% if rental_requests_by_post %}
+      {% for room in rooms %}
+        {% with requests=rental_requests_by_post|get_item:room.id %}
+          {% if requests and requests|length > 0 %}
+            <div style="margin-bottom:24px;padding:20px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06)">
+              <div style="font-weight:700;font-size:16px;color:#111827;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #3b82f6">
+                <i class="fas fa-home" style="color:#3b82f6;margin-right:8px"></i>{{ room.title }}
+              </div>
+              <table class="room-table" style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr style="background:#3b82f6;color:white">
+                    <th style="padding:14px 16px;text-align:left;font-weight:600;font-size:14px;border-top-left-radius:8px">Khách hàng</th>
+                    <th style="padding:14px 16px;text-align:left;font-weight:600;font-size:14px">Trạng thái</th>
+                    <th style="padding:14px 16px;text-align:left;font-weight:600;font-size:14px;border-top-right-radius:8px">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for req in requests %}
+                    <tr data-request-id="{{ req.id }}" class="rental-request-row" style="border-bottom:1px solid #e5e7eb;transition:background 0.2s;background:#f9fafb" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#f9fafb'">
+                      <td style="padding:14px 16px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <i class="fas fa-user-circle" style="font-size:24px;color:#6b7280"></i>
+                          <div>
+                            <div style="color:#111827;font-weight:600;font-size:14px">{{ req.customer.get_full_name|default:req.customer.username }}</div>
+                            <div style="color:#6b7280;font-size:12px;margin-top:2px">{{ req.customer.customerprofile.phone|default:"Chưa có SĐT" }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style="padding:14px 16px">
+                        <div style="display:flex;flex-direction:column;gap:6px">
+                          {% if req.is_pending %}<span style="background:#fbbf24;color:white;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;display:inline-block;width:fit-content"><i class="fas fa-clock" style="margin-right:4px"></i>Chờ xác nhận</span>{% endif %}
+                          {% if req.is_accepted %}<span style="background:#10b981;color:white;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;display:inline-block;width:fit-content"><i class="fas fa-check" style="margin-right:4px"></i>Đã chấp nhận</span>{% endif %}
+                          {% if req.is_declined %}<span style="background:#ef4444;color:white;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;display:inline-block;width:fit-content"><i class="fas fa-times" style="margin-right:4px"></i>Đã từ chối</span>{% endif %}
+                          {% if req.is_confirmed %}<span style="background:#3b82f6;color:white;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;display:inline-block;width:fit-content"><i class="fas fa-check-double" style="margin-right:4px"></i>Khách đã xác nhận thuê</span>{% endif %}
+                          {% if req.is_cancelled %}<span style="background:#6b7280;color:white;padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;display:inline-block;width:fit-content"><i class="fas fa-ban" style="margin-right:4px"></i>Đã hủy</span>{% endif %}
+                          {% if req.deposit_status == 'requested' %}
+                            <span style="background:#f59e0b;color:white;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:500;display:inline-block;width:fit-content"><i class="fas fa-paper-plane" style="margin-right:4px"></i>Đã gửi yêu cầu đặt cọc</span>
+                          {% elif req.deposit_status == 'paid' %}
+                            <span style="background:#10b981;color:white;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:500;display:inline-block;width:fit-content"><i class="fas fa-check-circle" style="margin-right:4px"></i>Khách hàng đã đặt cọc</span>
+                            <a href="{% url 'view_deposit_bill' req.id %}" target="_blank" style="background:#8b5cf6;color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;display:inline-block;text-decoration:none;transition:all 0.3s;width:fit-content" onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='#8b5cf6'"><i class="fas fa-file-invoice" style="margin-right:4px"></i>Xem Bill</a>
+                          {% elif req.deposit_status == 'cancelled' %}
+                            <span style="background:#ef4444;color:white;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:500;display:inline-block;width:fit-content"><i class="fas fa-times-circle" style="margin-right:4px"></i>Khách hàng đã hủy đặt cọc</span>
+                          {% elif req.deposit_status == 'waived' %}
+                            <span style="background:#6b7280;color:white;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:500;display:inline-block;width:fit-content"><i class="fas fa-handshake" style="margin-right:4px"></i>Không yêu cầu đặt cọc</span>
+                          {% endif %}
+                        </div>
+                      </td>
+                      <td style="padding:14px 16px">
+                        {% if req.is_pending %}
+                          <div style="display:flex;flex-direction:column;gap:10px">
+                            <div style="display:flex;gap:8px">
+                              <form method="post" action="{% url 'accept_rental_request' req.id %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 4px rgba(16,185,129,0.3)" onmouseover="this.style.background='#059669';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#10b981';this.style.transform='translateY(0)'">
+                                  <i class="fas fa-check-circle" style="margin-right:6px"></i>Chấp nhận
+                                </button>
+                              </form>
+                              <form method="post" action="{% url 'decline_rental_request' req.id %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" style="background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 4px rgba(239,68,68,0.3)" onmouseover="this.style.background='#dc2626';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#ef4444';this.style.transform='translateY(0)'">
+                                  <i class="fas fa-times-circle" style="margin-right:6px"></i>Từ chối
+                                </button>
+                              </form>
+                            </div>
+                            {% if req.deposit_status == 'none' %}
+                              <form method="post" action="{% url 'owner_request_deposit' req.id %}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                {% csrf_token %}
+                                <input type="text" name="deposit_amount" placeholder="Số tiền đặt cọc (VNĐ)" style="flex:1;min-width:180px;padding:8px 12px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;transition:border 0.3s" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#d1d5db'" />
+                                <button type="submit" style="background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 4px rgba(245,158,11,0.3);white-space:nowrap" onmouseover="this.style.background='#d97706';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#f59e0b';this.style.transform='translateY(0)'">
+                                  <i class="fas fa-coins" style="margin-right:6px"></i>Yêu cầu đặt cọc
+                                </button>
+                              </form>
+                              <form method="post" action="{% url 'owner_waive_deposit' req.id %}" style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" style="background:#6b7280;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 4px rgba(107,114,128,0.3)" onmouseover="this.style.background='#4b5563';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#6b7280';this.style.transform='translateY(0)'">
+                                  <i class="fas fa-handshake" style="margin-right:6px"></i>Không cần đặt cọc
+                                </button>
+                              </form>
+                            {% endif %}
+                          </div>
+                        {% elif req.cancel_request_status == 'waiting' %}
+                          <div style="padding:14px;background:#fef3c7;border-radius:8px">
+                            <div style="color:#92400e;font-weight:700;margin-bottom:6px;font-size:14px">
+                              <i class="fas fa-exclamation-triangle" style="margin-right:6px"></i>Yêu cầu hủy phòng
+                            </div>
+                            <div style="color:#78350f;font-size:13px;margin-bottom:10px;font-style:italic">
+                              "{{ req.cancel_reason }}"
+                            </div>
+                            <form method="post" action="{% url 'owner_confirm_cancel' req.id %}" style="display:flex;gap:8px">
+                              {% csrf_token %}
+                              <button type="submit" name="action" value="approve" style="background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                                <i class="fas fa-check" style="margin-right:6px"></i>Xác nhận hủy
+                              </button>
+                              <button type="submit" name="action" value="reject" style="background:#6b7280;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s" onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">
+                                <i class="fas fa-ban" style="margin-right:6px"></i>Từ chối hủy
+                              </button>
+                            </form>
+                          </div>
+                        {% elif req.is_confirmed %}
+                          <form method="post" action="{% url 'owner_cancel_rental_request' req.id %}" style="display:flex;flex-direction:column;gap:8px">
+                            {% csrf_token %}
+                            <input type="text" name="cancel_reason" placeholder="Nhập lý do hủy phòng..." required style="padding:10px 14px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;transition:border 0.3s" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#d1d5db'" />
+                            <button type="submit" style="background:#ef4444;color:white;border:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.3s;box-shadow:0 2px 4px rgba(239,68,68,0.3)" onmouseover="this.style.background='#dc2626';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#ef4444';this.style.transform='translateY(0)'">
+                              <i class="fas fa-ban" style="margin-right:6px"></i>Hủy phòng
+                            </button>
+                          </form>
+                        {% elif req.is_cancelled or req.is_declined %}
+                          <button class="delete-request-btn" data-request-id="{{ req.id }}" style="background:#ef4444;color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 4px rgba(239,68,68,0.3)" onmouseover="this.style.background='#dc2626';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#ef4444';this.style.transform='translateY(0)'">
+                            <i class="fas fa-trash-alt" style="margin-right:6px"></i>Xóa yêu cầu
+                          </button>
+                        {% else %}
+                          <span style="color:#9ca3af;font-size:13px;font-weight:500;font-style:italic;display:flex;align-items:center;gap:6px">
+                            <i class="fas fa-info-circle"></i>Không thể thao tác
+                          </span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        {% endwith %}
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:60px 20px;background:#f9fafb;border-radius:12px;border:2px dashed #d1d5db">
+        <i class="fas fa-inbox" style="font-size:64px;color:#d1d5db;margin-bottom:16px"></i>
+        <h3 style="color:#6b7280;font-size:18px;font-weight:600;margin-bottom:8px">Chưa có yêu cầu thuê nào</h3>
+        <p style="color:#9ca3af;font-size:14px">Các yêu cầu thuê từ khách hàng sẽ hiển thị tại đây.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+<script>
+document.querySelectorAll('.delete-request-btn').forEach(btn => {
+  btn.addEventListener('click', function(){
+    const requestId=this.getAttribute('data-request-id');
+    if(confirm('Bạn có chắc chắn muốn xóa yêu cầu thuê này?')){
+      fetch(`/delete-rental-request/${requestId}/`,{
+        method:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}'}
+      }).then(async r=>{
+        const data=await r.json().catch(()=>({}));
+        if(r.ok&&data.status==='ok'){
+          const row=this.closest('tr');
+          row.style.transition='opacity .3s';
+          row.style.opacity='0';
+          setTimeout(()=>{
+            row.remove();
+            // Check if table is now empty
+            const tbody = row.closest('tbody');
+            if(!tbody.querySelectorAll('tr').length){
+              const container = row.closest('div[style*="margin-bottom:24px"]');
+              if(container) container.remove();
+            }
+          },300);
+        }else{
+          alert(data.message||'Không thể xóa yêu cầu này');
+        }
+      }).catch(()=>alert('Lỗi mạng'));
+    }
+  });
+});
+</script>
+{% endblock %}

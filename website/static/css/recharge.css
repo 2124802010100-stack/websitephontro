@@ -1,0 +1,44 @@
+/* Purple theme for Recharge page */
+:root { --purple-1:#6d28d9; --purple-2:#8b5cf6; --purple-3:#a78bfa; --ink:#1f2937; --muted:#6b7280; --border:#e5e7eb; --bg:#f6f7fb; }
+
+.recharge-container { max-width:1280px; margin:20px auto; padding:0 24px; }
+
+.recharge-hero { background:linear-gradient(135deg,var(--purple-1) 0%, var(--purple-2) 90%); color:#fff; padding:28px 30px; border-radius:16px; box-shadow:0 8px 26px rgba(109,40,217,.25); margin-bottom:26px; }
+.recharge-hero h1 { margin:0 0 6px; font-size:28px; font-weight:800; letter-spacing:.2px; }
+.recharge-hero p { margin:0; opacity:.95; font-weight:500; }
+
+.recharge-card { background:#fff; border-radius:16px; padding:28px; box-shadow:0 10px 30px rgba(2,6,23,.08); margin-bottom:22px; }
+
+.recharge-form .grid-2 { display:grid; grid-template-columns:1fr; gap:22px; margin-bottom:16px; }
+@media (min-width:768px){ .recharge-form .grid-2 { grid-template-columns:1fr 1fr; } }
+
+.form-field { display:flex; flex-direction:column; gap:8px; }
+.form-field label { font-weight:700; color:var(--ink); }
+.input-wrap { position:relative; }
+.suffix { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-weight:700; }
+
+/* Controls applied via JS class binding to default Django widgets */
+.control { width:100%; border:1.5px solid var(--border); border-radius:12px; padding:14px 16px; font-size:15px; color:var(--ink); background:#fff; transition:border .15s, box-shadow .15s; }
+.control:focus { outline:none; border-color:var(--purple-3); box-shadow:0 0 0 3px rgba(167,139,250,.25); }
+
+.hint { font-size:12px; color:var(--muted); margin-top:2px; }
+.error { color:#ef4444; font-size:14px; }
+
+.actions { text-align:center; margin-top:10px; }
+.btn-primary { background:linear-gradient(135deg,var(--purple-2), var(--purple-1)); border:none; color:#fff; padding:14px 36px; border-radius:14px; font-size:16px; font-weight:800; letter-spacing:.2px; cursor:pointer; box-shadow:0 8px 18px rgba(109,40,217,.35); transition:transform .15s ease, filter .15s ease; }
+.btn-primary:hover { filter:brightness(1.06); transform:translateY(-2px); }
+
+.info-card { background:#faf7ff; border:1px solid #efe7ff; border-radius:16px; padding:22px 24px; }
+.info-card h3 { margin:0 0 10px; color:var(--ink); font-weight:700; }
+.info-card ul { margin:0; padding-left:18px; color:#4b5563; line-height:1.7; }
+
+.suggested-amounts { margin:26px 0 8px; }
+.suggested-amounts h3 { margin:0 0 14px; color:var(--ink); text-align:center; font-weight:700; }
+.amount-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:14px; }
+.btn-amount { background:#fff; border:2px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--ink); font-weight:700; box-shadow:0 6px 14px rgba(0,0,0,.04); }
+.btn-amount small { font-size:12px; color:var(--muted); font-weight:600; }
+.btn-amount:hover { border-color:var(--purple-3); box-shadow:0 10px 20px rgba(167,139,250,.25); transform:translateY(-2px); }
+.btn-amount.active { border-color:var(--purple-2); background:linear-gradient(180deg,#faf7ff,#ffffff); box-shadow:0 10px 22px rgba(139,92,246,.25); }
+
+/* Subtle page background harmonized with purple theme */
+body { background: var(--bg); }

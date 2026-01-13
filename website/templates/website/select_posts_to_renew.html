@@ -1,0 +1,288 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .main-content { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+
+    .select-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .vip-info {
+        background: #ecfdf5;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    .limitation-warning {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        color: #92400e;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .post-selection {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .post-checkbox {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .post-checkbox:hover {
+        background: #f9fafb;
+    }
+
+    .post-selection.selected {
+        background: #eff6ff;
+        border-color: #3b82f6;
+    }
+
+    .post-selection.post-rented {
+        background: #fefce8;
+        border-color: #fbbf24;
+        opacity: 0.8;
+    }
+
+    .post-selection.post-rented .post-checkbox {
+        cursor: not-allowed;
+    }
+
+    .checkbox-input {
+        margin-right: 12px;
+        margin-top: 4px;
+    }
+
+    .checkbox-input:disabled {
+        cursor: not-allowed;
+    }
+
+    .post-info {
+        flex: 1;
+    }
+
+    .post-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 8px;
+    }
+
+    .post-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .expired-badge {
+        background: #ef4444;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .selection-summary {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 20px 0;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2563eb;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-primary:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block main-content %}
+<div class="select-container">
+    <h1><i class="fas fa-tasks"></i> Chọn bài đăng để gia hạn</h1>
+
+    <div class="vip-info">
+        <i class="fas fa-gem"></i>
+        <strong>VIP hiện tại:</strong> {{ current_vip.get_plan_display }} - Hết hạn: {{ current_vip.expires_at|date:"d/m/Y H:i" }}<br>
+        <small>Thời gian gia hạn: {{ current_vip.post_expire_days }} ngày</small>
+    </div>
+
+    <div class="limitation-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Lưu ý:</strong> Gói {{ current_vip.get_plan_display }} chỉ cho phép gia hạn tối đa
+        <strong>{{ current_vip.posts_per_day }} bài đăng</strong>. Vui lòng chọn bài đăng ưu tiên.
+    </div>
+
+    {% if expired_posts %}
+    <form method="post" id="renew-form">
+        {% csrf_token %}
+
+        <div id="posts-list">
+            {% for post in expired_posts %}
+            <div class="post-selection {% if post.has_active_rental %}post-rented{% endif %}">
+                <label class="post-checkbox" for="post_{{ post.id }}">
+                    <input type="checkbox"
+                           class="checkbox-input"
+                           id="post_{{ post.id }}"
+                           name="selected_posts"
+                           value="{{ post.id }}"
+                           {% if post.has_active_rental %}disabled{% endif %}>
+
+                    <div class="post-info">
+                        <div class="post-title">{{ post.title }}</div>
+                        <div class="post-meta">
+                            <span><i class="fas fa-map-marker-alt"></i>
+                                {% if post.district %}{{ post.district.name }}{% elif post.province %}{{ post.province.name }}{% else %}Chưa cập nhật{% endif %}
+                            </span>
+                            <span><i class="fas fa-tag"></i> {{ post.price|floatformat:0 }}đ/tháng</span>
+                            <span><i class="fas fa-expand-arrows-alt"></i> {{ post.area }}m²</span>
+                        </div>
+                        <div class="post-meta">
+                            <span><i class="fas fa-calendar-plus"></i> Ngày đăng: {{ post.created_at|date:"d/m/Y" }}</span>
+                            <span><i class="fas fa-calendar-times"></i> Hết hạn: {{ post.expired_at|date:"d/m/Y H:i" }}</span>
+                            {% if post.has_active_rental %}
+                            <span class="expired-badge" style="background: #f59e0b;">
+                                <i class="fas fa-user-check"></i> Đang có người thuê
+                            </span>
+                            {% else %}
+                            <span class="expired-badge">Hết hạn</span>
+                            {% endif %}
+                        </div>
+                        {% if post.has_active_rental %}
+                        <div style="margin-top: 8px; padding: 8px; background: #fef3c7; border-radius: 6px; font-size: 13px; color: #92400e;">
+                            <i class="fas fa-lock"></i> Không thể gia hạn tin này vì đang có khách thuê. Vui lòng đợi khách trả phòng.
+                        </div>
+                        {% endif %}
+                    </div>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="selection-summary">
+            <div><strong>Đã chọn:</strong> <span id="selected-count">0</span> / {{ current_vip.posts_per_day }} bài</div>
+            <div><strong>Thời gian gia hạn:</strong> {{ current_vip.post_expire_days }} ngày</div>
+            <div id="warning-text" style="color: #ef4444; margin-top: 8px; display: none;">
+                <i class="fas fa-exclamation-triangle"></i> Vượt quá giới hạn cho phép!
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                <i class="fas fa-check"></i> Gia hạn các bài đã chọn
+            </button>
+            <a href="{% url 'expired_posts' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </form>
+    {% else %}
+    <div style="text-align: center; padding: 40px;">
+        <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 16px;"></i>
+        <h3>Không có bài đăng hết hạn</h3>
+        <p>Tất cả bài đăng của bạn vẫn còn hiệu lực.</p>
+        <a href="{% url 'manage_rooms' %}" class="btn btn-primary">
+            <i class="fas fa-list"></i> Xem tất cả tin đăng
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="selected_posts"]');
+    const selectedCountEl = document.getElementById('selected-count');
+    const warningTextEl = document.getElementById('warning-text');
+    const submitBtn = document.getElementById('submit-btn');
+    const maxAllowed = {{ current_vip.posts_per_day }};
+
+    function updateSelection() {
+        const selectedCount = document.querySelectorAll('input[name="selected_posts"]:checked').length;
+        selectedCountEl.textContent = selectedCount;
+
+        // Update submit button state
+        if (selectedCount === 0) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Chọn ít nhất 1 bài đăng';
+        } else if (selectedCount > maxAllowed) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Vượt quá giới hạn';
+            warningTextEl.style.display = 'block';
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fas fa-check"></i> Gia hạn ${selectedCount} bài đã chọn`;
+            warningTextEl.style.display = 'none';
+        }
+
+        // Update checkbox container styles
+        checkboxes.forEach(checkbox => {
+            const container = checkbox.closest('.post-checkbox');
+            if (checkbox.checked) {
+                container.classList.add('selected');
+            } else {
+                container.classList.remove('selected');
+            }
+        });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelection);
+    });
+
+    // Initial update
+    updateSelection();
+});
+</script>
+{% endblock %}

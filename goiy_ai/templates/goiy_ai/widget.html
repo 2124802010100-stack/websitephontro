@@ -1,0 +1,101 @@
+{% load static %}
+<!-- Widget Gợi ý AI - Có thể nhúng vào bất kỳ đâu -->
+<div class="ai-recommendations-widget" id="ai-recs-{{ widget_id|default:'default' }}">
+    <div class="widget-header mb-3">
+        <h4>
+            <i class="fas fa-magic text-primary"></i>
+            {{ title|default:"Gợi ý cho bạn" }}
+        </h4>
+        {% if subtitle %}
+        <p class="text-muted small">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+
+    <div class="recommendations-container" id="recs-container-{{ widget_id|default:'default' }}">
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const widgetId = '{{ widget_id|default:"default" }}';
+    const containerId = 'recs-container-' + widgetId;
+    const limit = {{ limit|default:8 }};
+    const strategy = '{{ strategy|default:"weighted" }}';
+    const postId = {{ post_id|default:"null" }};
+
+    // Load recommendations
+    function loadWidgetRecommendations() {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        let url = `/goiy-ai/api/recommendations/?limit=${limit}&strategy=${strategy}`;
+        if (postId) {
+            url += `&post_id=${postId}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.recommendations.length > 0) {
+                    renderWidgetRecommendations(container, data.recommendations);
+                } else {
+                    document.getElementById('ai-recs-' + widgetId).style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('ai-recs-' + widgetId).style.display = 'none';
+            });
+    }
+
+    function renderWidgetRecommendations(container, posts) {
+        let html = '<div class="row g-2">';
+
+        posts.forEach(post => {
+            const imageUrl = post.image_url || '{% static "images/no-image.png" %}';
+            const priceFormatted = new Intl.NumberFormat('vi-VN').format(post.price);
+
+            html += `
+            <div class="col-md-3 col-sm-6 mb-2">
+                <div class="card h-100 shadow-sm">
+                    <img src="${imageUrl}" class="card-img-top" alt="${post.title}"
+                         style="height: 150px; object-fit: cover;">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1" style="font-size: 14px;">
+                            <a href="/room/${post.id}/" class="text-dark text-decoration-none">
+                                ${post.title.substring(0, 40)}...
+                            </a>
+                        </h6>
+                        <p class="text-danger fw-bold mb-1" style="font-size: 13px;">
+                            ${priceFormatted} VNĐ
+                        </p>
+                        <p class="text-muted small mb-1" style="font-size: 12px;">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${post.district || ''} ${post.province || ''}
+                        </p>
+                        <a href="/room/${post.id}/" class="btn btn-sm btn-primary btn-sm w-100">
+                            Xem
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Auto load when DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadWidgetRecommendations);
+    } else {
+        loadWidgetRecommendations();
+    }
+})();
+</script>

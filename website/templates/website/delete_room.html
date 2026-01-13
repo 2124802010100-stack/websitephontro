@@ -1,0 +1,14 @@
+{% extends "website/base.html" %}
+
+{% block main-content %}
+<div class="container mt-4">
+  <h2>Xóa phòng</h2>
+  <p>Bạn có chắc chắn muốn xóa phòng <strong>{{ room.title }}</strong> không?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a href="{% url 'manage_rooms' %}" class="btn btn-secondary">Hủy</a>
+  </form>
+</div>
+{% endblock %}

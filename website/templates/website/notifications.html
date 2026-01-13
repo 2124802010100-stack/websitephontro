@@ -1,0 +1,48 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block main-content %}
+<div class="container" style="max-width: 820px; margin: 20px auto; padding: 0 16px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px;">
+    <h1 style="font-size:20px; font-weight:700;">🔔 Thông báo</h1>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a href="{% url 'notifications_mark_all_read' %}" style="font-size:13px; color:#2563eb; text-decoration:none;">Đánh dấu đã đọc tất cả</a>
+      <form action="{% url 'notifications_delete_all' %}" method="post" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" style="font-size:13px; color:#ef4444; background:transparent; border:0; cursor:pointer;">Xóa tất cả</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="background:#fff; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.06); overflow:hidden;">
+    {% if items %}
+      <ul style="list-style:none; margin:0; padding:0;">
+        {% for n in items %}
+          <li style="border-bottom:1px solid #f1f5f9;">
+            <div style="display:flex; align-items:stretch;">
+              <a href="{% url 'notification_go' n.id %}" style="display:flex; gap:12px; align-items:flex-start; padding:14px 16px; text-decoration:none; background:{% if not n.is_read %}#f8fafc{% else %}#fff{% endif %}; flex:1;">
+                <div style="width:10px; height:10px; border-radius:50%; margin-top:6px; background:{% if not n.is_read %}#f59e0b{% else %}#e5e7eb{% endif %}"></div>
+                <div style="flex:1;">
+                  <div style="font-weight:600; color:#111827;">{{ n.title }}</div>
+                  {% if n.message %}
+                    <div style="font-size:13px; color:#4b5563; margin-top:2px;">{{ n.message }}</div>
+                  {% endif %}
+                  <div style="font-size:12px; color:#6b7280; margin-top:4px;">{{ n.created_at|date:'d/m/Y H:i' }}</div>
+                </div>
+              </a>
+              <form action="{% url 'notification_delete' n.id %}" method="post" style="display:flex; align-items:center; padding:0 10px; background:{% if not n.is_read %}#f8fafc{% else %}#fff{% endif %}; border-left:1px solid #f1f5f9;">
+                {% csrf_token %}
+                <button type="submit" title="Xóa" style="border:0; background:transparent; color:#9ca3af; cursor:pointer; padding:8px;">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div style="padding:24px; text-align:center; color:#6b7280;">Không có thông báo.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

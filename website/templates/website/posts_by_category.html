@@ -1,0 +1,207 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+
+{% block extra_head %}
+  <title>Danh sách bài đăng: {{ category }}</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block main-content %}
+
+<main class="container wrapper" role="main">
+  <div class="main-content">
+    <div class="banner">
+      <div class="filter-tabs">
+        <a href="?" class="filter-tab {% if not has_video and not sort_newest %}active{% endif %}">Tất cả</a>
+        <a href="?newest=1" class="filter-tab {% if sort_newest %}active{% endif %}">Mới đăng</a>
+        <a href="?has_video=1" class="filter-tab {% if has_video %}active{% endif %}">Có video</a>
+      </div>
+    </div>
+
+    {% for post in posts %}
+
+    {% if forloop.counter <= 5 %}
+    <article class="rental-card">
+      <section class="image-gallery">
+        {% with post.images.all|slice:":4" as images %}
+        {% with post.videos.all|slice:":4" as videos %}
+        {% with images|length|add:videos|length as total_items %}
+        {% if images|length > 0 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% if images|length > 1 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% if images|length > 2 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% if images|length > 3 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.3.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.3.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% for vid in videos %}
+          <div class="image-gallery-item">
+            <a href="{{ vid.video.url }}" data-lightbox="gallery{{ post.id }}" data-type="video/mp4">
+              <video muted autoplay loop>
+                <source src="{{ vid.video.url }}" type="video/mp4">
+              </video>
+            </a>
+          </div>
+        {% endfor %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% if total_items > 4 %}
+          <div class="photo-count">
+            <span class="material-icons">photo</span>
+            +{{ total_items|add:-4 }}
+          </div>
+        {% endif %}
+      </section>
+      <section class="content">
+        <div class="title-section">
+          <h2 class="title"><a href="{% url 'post_detail' post.id %}">{{ post.title }}</a></h2>
+          <div class="stars">{% for _ in "12345" %}<span class="material-icons">star</span>{% endfor %}</div>
+        </div>
+        <div class="price-info">
+          <div class="price">{{ post.price|floatformat:0 }}.000.000 triệu/tháng</div>
+          <div class="area">{{ post.area }} m²</div>
+          <div class="location">{{ post.address }}</div>
+        </div>
+        <p class="description">{{ post.description|truncatewords:20 }}</p>
+        <div class="contact-row">
+          <div class="contact-info">
+            <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+            <div class="contact-details">
+              <span class="contact-name">{{ post.user|display_name }}</span>
+              <span class="contact-time">{{ post.created_at|timesince }} trước</span>
+            </div>
+          </div>
+          <div class="contact-actions">
+            <button class="phone-button"><span class="material-icons">phone</span>{{ post.phone_number|default:post.user.customerprofile.phone|default:"096176889" }}</button>
+            <span class="material-icons favorite-icon" style="cursor:pointer; color:#ccc;">favorite_border</span>
+          </div>
+        </div>
+      </section>
+    </article>
+    {% else %}
+    <article class="rental-card alternate-layout">
+      <section class="image-gallery alternate-gallery">
+        {% with post.images.all|slice:":3" as images %}
+        {% if images|length > 0 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% if images|length > 1 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% if images|length > 2 %}
+          <div class="image-gallery-item">
+            <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+              <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+            </a>
+          </div>
+        {% endif %}
+        {% endwith %}
+      </section>
+      <section class="content alternate-content">
+        <div class="title-section">
+          <h2 class="title"><a href="{% url 'post_detail' post.id %}">{{ post.title }}</a></h2>
+          <div class="stars">{% for _ in "12345" %}<span class="material-icons">star</span>{% endfor %}</div>
+        </div>
+        <div class="price-info">
+          <div class="price">{{ post.price }} triệu/tháng</div>
+          <div class="area">{{ post.area }} m²</div>
+        </div>
+        <div class="location"><span class="material-icons" style="font-size:16px;">location_on</span> {{ post.address }}</div>
+        <p class="description">{{ post.description|truncatewords:20 }}</p>
+        <div class="contact-row">
+          <div class="contact-info">
+            <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+            <div>
+              <span class="contact-name">{{ post.user|display_name }}</span>
+              <div class="contact-time">{{ post.created_at|timesince }} trước</div>
+            </div>
+          </div>
+          <button class="phone-button"><span class="material-icons" style="font-size:16px;">phone</span>{{ post.phone_number|default:"0983230272" }}</button>
+          <span class="material-icons favorite-icon">favorite_border</span>
+        </div>
+      </section>
+    </article>
+    {% endif %}
+    {% empty %}
+      <p class="empty-state">Chưa có bài đăng nào trong mục này.</p>
+    {% endfor %}
+
+  </div>
+
+  <aside class="sidebar">
+      <div class="sidebar-section">
+        <h3>Xem theo khoảng giá</h3>
+        <div class="price-filter">
+          <a href="?price=0-1000000">Dưới 1 triệu</a>
+          <a href="?price=1000000-2000000">Từ 1 - 2 triệu</a>
+          <a href="?price=2000000-3000000">Từ 2 - 3 triệu</a>
+          <a href="?price=3000000-5000000">Từ 3 - 5 triệu</a>
+          <a href="?price=5000000-7000000">Từ 5 - 7 triệu</a>
+          <a href="?price=7000000-10000000">Từ 7 - 10 triệu</a>
+          <a href="?price=10000000-15000000">Từ 10 - 15 triệu</a>
+          <a href="?price=15000000-999999999">Trên 15 triệu</a>
+
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Xem theo diện tích</h3>
+        <div class="area-filter">
+          <a href="?area=0-20">Dưới 20m²</a>
+          <a href="?area=20-30">Từ 20 - 30m²</a>
+          <a href="?area=30-50">Từ 30 - 50m²</a>
+          <a href="?area=50-70">Từ 50 - 70m²</a>
+          <a href="?area=70-90">Từ 70 - 90m²</a>
+          <a href="?area=90-999">Trên 90m²</a>
+        </div>
+      </div>
+  </aside>
+</main>
+
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <script>
+  // Simple favorite toggle (no server)
+  document.querySelectorAll('.favorite-icon').forEach(icon=>{
+    icon.addEventListener('click',()=>{
+      const liked = icon.textContent === 'favorite';
+      icon.textContent = liked ? 'favorite_border' : 'favorite';
+      icon.style.color = liked ? '#ccc' : '#dc3545';
+    });
+  });
+  </script>
+{% endblock %}

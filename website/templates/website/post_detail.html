@@ -1,0 +1,783 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% load vip_tags %}
+{% load humanize %}
+
+{% block title %}{{ post.title }} | {{ post.city.name|default:"" }}{% endblock %}
+
+{% block main-content %}
+
+</style>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/post_detail.css' %}">
+
+<!-- Messages sẽ hiển thị từ base.html -->
+
+  <style>
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+  <script>
+    // Auto hide messages after 5 seconds
+    setTimeout(function() {
+      document.querySelectorAll('.alert').forEach(function(alert) {
+        alert.style.transition = 'opacity 0.5s ease-out';
+        alert.style.opacity = '0';
+        setTimeout(function() {
+          alert.style.display = 'none';
+        }, 500);
+      });
+    }, 5000);
+  </script>
+
+<div class="detail-page container">
+  {% if active_report %}
+  <div style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;padding:14px 16px;border-radius:12px;margin-bottom:16px;font-size:14px;font-weight:500;">
+    ⚠️ Bài đăng đang bị hệ thống xử lý vi phạm. Nội dung có thể thay đổi để xử lý vấn đề.
+  </div>
+  {% endif %}
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/">Trang chủ</a>
+    <span class="sep">/</span>
+    <a href="#">{{ post.get_category_display }}</a>
+    {% if post.province %}<span class="sep">/</span><a href="#">{{ post.province.name }}</a>{% endif %}
+    {% if post.district %}<span class="sep">/</span><a href="#">{{ post.district.name }}</a>{% endif %}
+    <span class="sep">/</span>
+    <span>{{ post.title }}</span>
+</div>
+
+
+  <div class="detail-grid">
+    <!-- ===== LEFT COLUMN ===== -->
+    <div>
+      <!-- Media Viewer -->
+      <div class="media-card">
+        <div class="media-stage" id="mediaStage">
+          {% if images %}
+            <img id="mainMedia" src="{{ images.0.image.url }}" alt="{{ post.title }}">
+          {% elif videos %}
+            <video id="mainMedia" controls>
+              <source src="{{ videos.0.video.url }}" type="video/mp4" />
+            </video>
+          {% else %}
+            <img id="mainMedia" src="{% static 'img/placeholder-4x3.png' %}" alt="no-image">
+          {% endif %}
+          <button class="media-nav prev" id="prevBtn">&#10094;</button>
+          <button class="media-nav next" id="nextBtn">&#10095;</button>
+        </div>
+        <div class="thumb-strip" id="thumbStrip">
+          {% for img in images %}
+            <div class="thumb {% if forloop.first %}active{% endif %}" data-kind="image" data-src="{{ img.image.url }}">
+              <img src="{{ img.image.url }}" alt="thumb">
+            </div>
+          {% endfor %}
+          {% for vid in videos %}
+            <div class="thumb" data-kind="video" data-src="{{ vid.video.url }}">
+              <video muted>
+                <source src="{{ vid.video.url }}" type="video/mp4">
+              </video>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Post Header / Meta -->
+      <div class="post-card">
+        {% if post.is_featured %}<div class="vip-badge">TIN VIP NỔI BẬT</div>{% endif %}
+        <h1 class="post-title" style="color:{% vip_style_color post.user %}">{{ post.title }}</h1>
+
+        <div class="price-line">
+          <span class="price">{{ post.price|to_million }} triệu/tháng</span>
+          <span class="area">{{ post.area }} m²</span>
+           <span class="post-meta">Cập nhật: {{ post.updated_at|timesince_vi|default:post.created_at|timesince_vi }} trước</span>
+        </div>
+
+        <div class="post-meta" style="margin-top:8px;">
+          <span><strong>Quận huyện:</strong> {{ post.district.name|default:"--" }}</span>
+          <span class="dot"></span>
+          <span><strong>Tỉnh thành:</strong>
+  {% if post.province %}{{ post.province.name }}{% else %}Chưa cập nhật{% endif %}
+</span>
+
+          <span class="dot"></span>
+          <span><strong>Địa chỉ:</strong> {{ post.address|default:"Chưa cập nhật" }}</span>
+        </div>
+
+        <div class="post-meta" style="margin-top:8px;">
+          <span><strong>Mã tin:</strong> #{{ post.code|default:post.id }}</span>
+          <span class="dot"></span>
+          <span><strong>Ngày đăng:</strong> {{ post.created_at|date:"H:i d/m/Y" }}</span>
+          <span class="dot"></span>
+          <span><strong>Hết hạn:</strong> {{ post.expired_at|date:"d/m/Y"|default:"Chưa cập nhật" }}</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="desc-card">
+        <div class="section-title">Thông tin mô tả</div>
+        <p>{{ post.description|default:"Chưa có mô tả" }}</p>
+        {% if post.features_list %}
+          <div style="margin-top:12px; font-size:14px; color:var(--text-primary);">
+            <strong>Đặc điểm nổi bật:</strong> {{ post.features_list|join:", " }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Map -->
+      <div class="map-card">
+        <div class="section-title">Vị trí & bản đồ</div>
+        <div class="map-meta">Địa chỉ: {{ post.address|default:"Chưa cập nhật" }}
+          {% if post.address %}
+            • <a href="https://www.google.com/maps?q={{ post.address|urlencode }}" target="_blank">Xem bản đồ lớn</a>
+          {% endif %}
+        </div>
+        <iframe class="map-iframe" loading="lazy" allowfullscreen
+          src="https://www.google.com/maps?q={{ post.address|urlencode|default:'Hà Nội, Việt Nam' }}&output=embed"></iframe>
+      </div>
+
+      <!-- Contact Info Below Map -->
+      <div class="contact-info-card">
+{% load user_display %}
+        <div class="section-title">Thông tin liên hệ</div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+          <div>
+            <div class="owner-name">{{ post.user|display_name }}</div>
+            <div class="owner-sub">Tham gia từ: {{ post.user.date_joined|date:"d/m/Y"|default:"Chưa cập nhật" }}</div>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:12px;">
+            <a class="btn btn-call" href="tel:{{ post.phone_number|default:post.user.customerprofile.phone|default:'0901234567' }}"><span class="material-icons">call</span> Gọi</a>
+            <a class="btn btn-zalo" target="_blank" href="https://zalo.me/{{ post.phone_number|default:post.user.customerprofile.phone|default:'0901234567' }}"><span class="material-icons">chat</span> Nhắn Zalo</a>
+          </div>
+        </div>
+        <div class="note">
+          <strong>Lưu ý:</strong> Chỉ đặt cọc hoặc chuyển tiền khi đã xác định được chủ nhà và thỏa thuận bằng văn bản rõ ràng. Kiểm tra mọi điều khoản và yêu cầu liệt kê tất cả chi phí liên quan vào hợp đồng.
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT COLUMN ===== -->
+    <aside>
+  <div class="owner-card">
+    <!-- Avatar + Thông tin -->
+    <div class="owner-avatar">
+      <img src="{% static 'images/avatar-default.png' %}" alt="Avatar">
+    </div>
+    <div class="owner-info">
+      <div class="owner-phone">{{ post.phone_number|default:post.user.customerprofile.phone|default:'0901234567' }}</div>
+      <div class="online">● Đang hoạt động</div>
+      <div class="owner-sub">
+        {{ post.user.rentalpost_set.count }} tin đăng •
+        Tham gia từ: {{ post.user.date_joined|date:"d/m/Y" }}
+      </div>
+    </div>
+
+    <!-- Nút hành động -->
+    <div class="owner-actions">
+      <a class="btn btn-call" href="tel:{{ post.phone_number|default:post.user.customerprofile.phone }}">
+        📞 {{ post.phone_number|default:post.user.customerprofile.phone }}
+      </a>
+      <a class="btn btn-zalo" target="_blank" href="https://zalo.me/{{ post.zalo|default:post.user.customerprofile.phone }}">
+        💬 Nhắn Zalo
+      </a>
+      <a class="btn btn-zalo" href="{% url 'start_chat' post.id %}">
+  💬 CHAT NHANH
+</a>
+
+<!-- Khung chat ẩn -->
+<div id="chat-box" style="display:none; position:fixed; bottom:20px; right:20px;
+                          width:300px; height:400px; background:#fff; border:1px solid #ddd;
+                          box-shadow:0 2px 8px rgba(0,0,0,.2);">
+  <!-- Header -->
+  <div style="background:#2563eb; color:#fff; padding:8px; display:flex; justify-content:space-between; align-items:center;">
+    <span>Chat Test</span>
+    <button id="chat-close" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">×</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages" style="padding:8px; height:300px; overflow-y:auto; font-size:14px;"></div>
+
+  <!-- Input -->
+  <div style="padding:8px; display:flex; gap:4px;">
+    <input id="chat-message-input" style="flex:1; border:1px solid #ccc; padding:4px;" type="text" placeholder="Nhập tin...">
+    <button id="chat-message-submit" style="padding:4px 8px;">Gửi</button>
+  </div>
+</div>
+
+<script>
+  // Bấm nút đóng
+  document.getElementById("chat-close").onclick = function() {
+    document.getElementById("chat-box").style.display = "none";
+  };
+</script>
+
+
+    </div>
+
+    <!-- Nút nhỏ -->
+    <div class="owner-extra">
+      <a href="#" class="action-item">
+  <span
+    class="material-icons favorite-icon {% if post.id in saved_ids %}saved{% endif %}"
+    data-post-id="{{ post.id }}">
+    {% if post.id in saved_ids %}favorite{% else %}favorite_border{% endif %}
+  </span>
+  Lưu tin
+</a>
+
+      <a href="#" class="action-item" id="shareBtn"><span class="material-icons">share</span> Chia sẻ</a>
+      {% if user.is_authenticated and already_reported %}
+        <span class="action-item" style="color:#9ca3af; cursor:not-allowed;">
+          <span class="material-icons">report</span> Đã báo cáo
+        </span>
+      {% else %}
+        <a href="#" class="action-item" id="reportBtn"><span class="material-icons">report</span> Báo xấu</a>
+      {% endif %}
+    </div>
+    {% load review_tags %}
+    <div style="margin-top:12px; padding:12px; border:1px solid #eee; border-radius:10px; background:#fafafa;">
+      {% landlord_rating_avg post.user as avg_rating %}
+      {% landlord_rating_count post.user as total_reviews %}
+      <div style="font-weight:700; margin-bottom:6px;">⭐ Đánh giá chủ trọ: {{ avg_rating }}/5</div>
+      {% latest_landlord_reviews post.user 2 as sidebar_reviews %}
+      {% for rv in sidebar_reviews %}
+        <div style="font-size:13px; margin-bottom:4px; color:#374151;">
+          <span style="color:#f59e0b; margin-right:4px;">{% for _ in "x"|rjust:rv.rating %}★{% endfor %}</span>
+          {{ rv.reviewer|display_name }}: "{{ rv.comment|truncatechars:60 }}"
+        </div>
+      {% empty %}
+        <div style="color:#6b7280;">Chưa có đánh giá</div>
+      {% endfor %}
+      <div style="margin-top:6px;"><a href="{% url 'landlord_reviews' post.user.id %}">Xem tất cả {{ total_reviews }} đánh giá</a></div>
+    </div>
+  </div>
+</aside>
+    </aside>
+  </div>
+</div>
+
+<!-- Form báo cáo vi phạm sidebar -->
+<div id="reportSidebar" style="position: fixed; top: 0; right: -400px; width: 400px; height: 100vh;
+     background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.2); z-index: 10000;
+     transition: right 0.3s ease; overflow-y: auto;">
+  <div style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+      <h3 style="margin: 0; color: #2563eb; font-size: 18px;">
+        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">report</span>
+        Phản ánh tin đăng
+      </h3>
+      <button id="closeReportBtn" style="background: none; border: none; cursor: pointer; font-size: 24px; color: #666;">×</button>
+    </div>
+
+    {% if user.is_authenticated and already_reported %}
+      <div style="background:#fee2e2;border:1px solid #ef4444;color:#991b1b;padding:12px;border-radius:6px;">
+        <strong>⛔ Bạn đã báo cáo tin này.</strong><br>
+        Mỗi tài khoản chỉ được báo cáo một lần cho mỗi bài đăng.
+      </div>
+    {% else %}
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'submit_report' post.id %}" style="display: flex; flex-direction: column; gap: 16px;">
+      {% csrf_token %}
+
+      <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; font-size: 13px; color: #856404;">
+        <strong>Lưu ý:</strong> Chúng tôi chỉ xử lý các phản ánh liên quan đến nội dung tin đăng. Các vấn đề liên quan đến giao dịch, vui lòng liên hệ trực tiếp với chủ tin.
+      </div>
+
+      <div>
+        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">
+          Lý do phản ánh: <span style="color: red;">*</span>
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="reason" value="fraud" required style="margin-right: 8px;">
+            <span>Tin có dấu hiệu lừa đảo</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="reason" value="duplicate" required style="margin-right: 8px;">
+            <span>Tin trung lặp nội dung</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="reason" value="inappropriate" required style="margin-right: 8px;">
+            <span>Không liên hệ được chủ tin đăng</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="reason" value="wrong_info" required style="margin-right: 8px;">
+            <span>Thông tin không đúng thực tế (giá, diện tích, hình ảnh...)</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="reason" value="other" required style="margin-right: 8px;">
+            <span>Lý do khác</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label for="reportDescription" style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">
+          Mô tả thêm:
+        </label>
+        <textarea id="reportDescription" name="description" rows="4"
+                  placeholder="Mô tả chi tiết về vấn đề bạn gặp phải..."
+                  style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
+      </div>
+
+      <div style="border-top: 1px solid #eee; padding-top: 16px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">Thông tin liên hệ</h4>
+
+        {% if user.is_authenticated %}
+        <div style="background: #e0f2fe; border: 1px solid #0284c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+          <p style="margin: 0 0 8px 0; font-size: 13px; color: #0c4a6e;">
+            <strong>📋 Thông tin của bạn:</strong>
+          </p>
+          <p style="margin: 4px 0; font-size: 14px; color: #0c4a6e;">
+            <strong>Họ tên:</strong> {{ user.get_full_name|default:user.username }}
+          </p>
+          <p style="margin: 4px 0; font-size: 14px; color: #0c4a6e;">
+            <strong>Số điện thoại:</strong> {{ user.customerprofile.phone|default:"Chưa cập nhật" }}
+          </p>
+          <p style="margin: 8px 0 0 0; font-size: 12px; color: #0369a1; font-style: italic;">
+            💡 Thông tin này sẽ được gửi kèm báo cáo để admin có thể liên hệ nếu cần.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+              color: white; padding: 12px 24px; border: none; border-radius: 6px;
+              font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.3s;">
+        Gửi phản ánh
+      </button>
+    </form>
+    {% else %}
+      <div style="background:#eef2ff;border:1px solid #3b82f6;color:#1e40af;padding:12px;border-radius:6px;">
+        Vui lòng <a href="{% url 'login' %}?next={{ request.path }}" style="font-weight:600; text-decoration:underline;">đăng nhập</a> để gửi báo cáo.
+      </div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Overlay backdrop -->
+<div id="reportOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+     background: rgba(0,0,0,0.5); z-index: 9999;"></div>
+
+<script>
+  // Simple media gallery: switch main media by clicking thumbs, and prev/next buttons
+  (function(){
+    const stage = document.getElementById('mediaStage');
+    const strip = document.getElementById('thumbStrip');
+    const prev = document.getElementById('prevBtn');
+    const next = document.getElementById('nextBtn');
+    if(!strip) return;
+
+    const items = Array.from(strip.querySelectorAll('.thumb'));
+    let idx = items.findIndex(el => el.classList.contains('active'));
+    if(idx < 0) idx = 0;
+
+    function render(index){
+      if(items.length === 0) return;
+      idx = (index + items.length) % items.length;
+      items.forEach((el,i)=> el.classList.toggle('active', i===idx));
+      const el = items[idx];
+      const kind = el.dataset.kind;
+      const src = el.dataset.src;
+      stage.querySelectorAll('img,video').forEach(n=>n.remove());
+      if(kind === 'video'){
+        const v = document.createElement('video');
+        v.controls = true;
+        v.style.width='100%';
+        v.style.height='100%';
+        v.style.objectFit='contain';
+        const s = document.createElement('source');
+        s.src = src;
+        s.type = 'video/mp4';
+        v.appendChild(s);
+        stage.prepend(v);
+      } else {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'media';
+        img.style.width='100%';
+        img.style.height='100%';
+        img.style.objectFit='contain';
+        stage.prepend(img);
+      }
+    }
+
+    items.forEach((el,i)=> el.addEventListener('click', ()=> render(i)));
+    prev && prev.addEventListener('click', ()=> render(idx-1));
+    next && next.addEventListener('click', ()=> render(idx+1));
+
+    // Share copy link
+    const shareBtn = document.getElementById('shareBtn');
+    if(shareBtn && navigator.clipboard){
+      shareBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href);
+        this.innerHTML = '<span class="material-icons icon">content_copy</span> Đã sao chép';
+        setTimeout(() => this.innerHTML = '<span class="material-icons icon">share</span> Chia sẻ', 1500);
+      });
+    }
+
+    // Report sidebar toggle
+    const reportBtn = document.getElementById('reportBtn');
+    const reportSidebar = document.getElementById('reportSidebar');
+    const reportOverlay = document.getElementById('reportOverlay');
+    const closeReportBtn = document.getElementById('closeReportBtn');
+
+    function openReportSidebar() {
+      reportSidebar.style.right = '0';
+      reportOverlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReportSidebar() {
+      reportSidebar.style.right = '-400px';
+      reportOverlay.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    if(reportBtn) {
+      reportBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        {% if user.is_authenticated %}
+          openReportSidebar();
+        {% else %}
+          alert('Vui lòng đăng nhập để sử dụng chức năng báo xấu!');
+          window.location.href = '{% url "login" %}?next={{ request.path }}';
+        {% endif %}
+      });
+    }
+
+    if(closeReportBtn) {
+      closeReportBtn.addEventListener('click', closeReportSidebar);
+    }
+
+    if(reportOverlay) {
+      reportOverlay.addEventListener('click', closeReportSidebar);
+    }
+
+    // Close sidebar with ESC key
+    document.addEventListener('keydown', function(e) {
+      if(e.key === 'Escape' && reportSidebar.style.right === '0px') {
+        closeReportSidebar();
+      }
+    });
+  })();
+  // Xử lý lấy CSRF token từ cookie
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+// Xử lý click lưu tin
+document.querySelectorAll('.favorite-icon').forEach(icon => {
+  icon.addEventListener('click', e => {
+    e.preventDefault();
+    const postId = icon.dataset.postId;
+
+    fetch(`/saved/toggle/${postId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'saved') {
+        icon.textContent = 'favorite';
+        icon.classList.add('saved');
+      } else {
+        icon.textContent = 'favorite_border';
+        icon.classList.remove('saved');
+      }
+    })
+    .catch(err => console.error(err));
+  });
+});
+// Xử lý chat nhanh
+
+document.addEventListener("DOMContentLoaded", function() {
+    const chatBox = document.getElementById("chat-box");
+    const toggleBtn = document.getElementById("open-chat"); // đúng id
+    const messages = document.getElementById("messages"); // đúng id
+    const input = document.getElementById("chat-message-input"); // đúng id
+    const sendBtn = document.getElementById("chat-message-submit"); // đúng id
+
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const roomName = "{{ post.id }}";   // id bài đăng
+    const chatSocket = new WebSocket(
+        wsScheme + '://' + window.location.host + '/ws/chat/' + roomName + '/'
+    );
+
+    chatSocket.onmessage = function(e){
+        const data = JSON.parse(e.data);
+        if (data.type === "chat.message") {
+            const el = document.createElement("div");
+            el.textContent = data.message.content;
+            messages.appendChild(el);
+            messages.scrollTop = messages.scrollHeight;
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error("Chat socket closed unexpectedly");
+    };
+
+    function sendMessage(){
+        if (input.value.trim() === "") return;
+        chatSocket.send(JSON.stringify({
+            "type": "chat.message",
+            "content": input.value
+        }));
+        input.value = "";
+    }
+
+    sendBtn.onclick = sendMessage;
+    input.addEventListener("keypress", function(e){
+        if (e.key === "Enter") sendMessage();
+    });
+
+    // Toggle chat box
+    toggleBtn.onclick = function(){
+        if (chatBox.style.display === "none") {
+            chatBox.style.display = "block";
+        } else {
+            chatBox.style.display = "none";
+        }
+    };
+});
+</script>
+
+<!-- AI Tracking: Track xem bài chi tiết -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const postId = {{ post.id }};
+    const startTime = Date.now();
+
+    // Track khi user xem bài
+    fetch(`/goiy-ai/track/view/${postId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            duration: 0  // Sẽ update khi user rời trang
+        })
+    }).then(response => {
+        if (response.ok) {
+            console.log('✅ AI tracked view for post', postId);
+        }
+    }).catch(err => console.error('Track view error:', err));
+
+    // Track thời gian xem khi user rời trang
+    window.addEventListener('beforeunload', function() {
+        const duration = Math.floor((Date.now() - startTime) / 1000);  // giây
+
+        // Gửi duration update (dùng sendBeacon để không bị block)
+        const data = JSON.stringify({ duration: duration });
+        navigator.sendBeacon(`/goiy-ai/track/view/${postId}/`, data);
+    });
+
+    console.log('🤖 AI Recommendation tracking active for post', postId);
+});
+</script>
+
+<!-- Tin đăng cùng khu vực -->
+{% if same_area_posts %}
+<div class="container" style="margin-top: 40px; margin-bottom: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 600; color: #1e293b; margin: 0;">
+            Tin đăng cùng khu vực
+        </h2>
+
+        <!-- Navigation buttons -->
+        <div style="display: flex; gap: 8px;">
+            <button id="prevAreaPost" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #f97316; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                <span style="font-size: 24px; font-weight: bold;">‹</span>
+            </button>
+            <button id="nextAreaPost" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #f97316; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                <span style="font-size: 24px; font-weight: bold;">›</span>
+            </button>
+        </div>
+    </div>
+
+    <div style="position: relative; overflow: hidden;">
+        <div id="areaPostsCarousel" style="display: flex; transition: transform 0.3s ease-in-out; gap: 20px;">
+            {% for area_post in same_area_posts %}
+            <div style="flex: 0 0 calc(25% - 15px); min-width: calc(25% - 15px);">
+                <a href="{% url 'post_detail' area_post.id %}" style="text-decoration: none; color: inherit;">
+                    <div class="area-post-card" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; transition: all 0.3s; cursor: pointer; background: white;">
+                        <!-- Hình ảnh -->
+                        <div style="position: relative; padding-top: 66.67%; overflow: hidden; background: #f1f5f9;">
+                            {% with area_post.images.first as first_image %}
+                                {% if first_image %}
+                                    <img src="{{ first_image.image.url }}"
+                                         alt="{{ area_post.title }}"
+                                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                                        <span class="material-icons" style="font-size: 48px;">image</span>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+
+                            <!-- Badge số ảnh -->
+                            <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                                <span class="material-icons" style="font-size: 14px;">photo_camera</span>
+                                {{ area_post.images.count }}
+                            </div>
+
+                            <!-- Badge Chính chủ -->
+                            {% if area_post.owner.role == 'landlord' %}
+                            <div style="position: absolute; top: 0; right: 0; background: #dc2626; color: white; padding: 6px 12px; border-bottom-left-radius: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Chính chủ cho thuê
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nội dung -->
+                        <div style="padding: 12px;">
+                            <!-- Rating stars -->
+                            {% vip_star_count area_post.user as area_stars %}
+                            {% if area_stars and area_stars|add:0 > 0 %}
+                            <div style="margin-bottom: 6px; color: #fbbf24; font-size: 14px;">
+                                {% for _ in "x"|rjust:area_stars %}★{% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Tiêu đề -->
+                            <h5 style="font-size: 14px; font-weight: 600; color: {% vip_style_color area_post.user %}; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; min-height: 40px;">
+                                {{ area_post.title }}
+                            </h5>
+
+                            <!-- Giá -->
+                            <p style="font-size: 15px; font-weight: 700; color: #16a34a; margin-bottom: 6px;">
+                                {% with price_million=area_post.price|to_million %}
+                                    {% if price_million == "Liên hệ" %}
+                                        {{ price_million }}
+                                    {% else %}
+                                        {{ price_million }} triệu/tháng
+                                    {% endif %}
+                                {% endwith %}
+                            </p>
+
+                            <!-- Diện tích -->
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 4px;">
+                                {{ area_post.area }} m²
+                            </div>
+
+                            <!-- Địa chỉ -->
+                            <div style="font-size: 13px; color: #1e293b; font-weight: 500;">
+                                {{ area_post.district.name|default:"--" }}, {{ area_post.province.name|default:"--" }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.area-post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+}
+
+#prevAreaPost:hover, #nextAreaPost:hover {
+    background: #f97316;
+    color: white;
+    border-color: #f97316;
+}
+
+@media (max-width: 992px) {
+    #areaPostsCarousel > div {
+        flex: 0 0 calc(50% - 10px) !important;
+        min-width: calc(50% - 10px) !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #areaPostsCarousel > div {
+        flex: 0 0 100% !important;
+        min-width: 100% !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const carousel = document.getElementById('areaPostsCarousel');
+    const prevBtn = document.getElementById('prevAreaPost');
+    const nextBtn = document.getElementById('nextAreaPost');
+
+    if (!carousel || !prevBtn || !nextBtn) return;
+
+    let currentIndex = 0;
+    const items = carousel.children;
+    const totalItems = items.length;
+    const itemsPerView = window.innerWidth > 992 ? 4 : (window.innerWidth > 576 ? 2 : 1);
+    const maxIndex = Math.max(0, totalItems - itemsPerView);
+
+    function updateCarousel() {
+        const itemWidth = items[0].offsetWidth;
+        const gap = 20;
+        const offset = currentIndex * (itemWidth + gap);
+        carousel.style.transform = `translateX(-${offset}px)`;
+
+        // Disable buttons at boundaries
+        prevBtn.style.opacity = currentIndex === 0 ? '0.5' : '1';
+        prevBtn.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
+        nextBtn.style.opacity = currentIndex >= maxIndex ? '0.5' : '1';
+        nextBtn.style.cursor = currentIndex >= maxIndex ? 'not-allowed' : 'pointer';
+    }
+
+    prevBtn.addEventListener('click', function() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCarousel();
+        }
+    });
+
+    nextBtn.addEventListener('click', function() {
+        if (currentIndex < maxIndex) {
+            currentIndex++;
+            updateCarousel();
+        }
+    });
+
+    updateCarousel();
+
+    // Update on window resize
+    window.addEventListener('resize', function() {
+        currentIndex = 0;
+        updateCarousel();
+    });
+});
+</script>
+{% endif %}
+
+{% endblock %}

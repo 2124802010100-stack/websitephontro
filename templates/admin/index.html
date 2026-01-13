@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <h1 class="mb-4">📊 Bảng điều khiển</h1>
+
+  <div class="row">
+    <!-- Người dùng -->
+    <div class="col-md-3">
+      <div class="card text-white bg-primary mb-3 shadow">
+        <div class="card-body">
+          <h5 class="card-title">Người dùng</h5>
+          <p class="card-text display-6">{{ users_count }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Người dùng đang online -->
+    <div class="col-md-3">
+      <div class="card text-white bg-success mb-3 shadow">
+        <div class="card-body">
+          <h5 class="card-title">Đang đăng nhập</h5>
+          <p class="card-text display-6">{{ logged_in_count }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tổng tin đăng -->
+    <div class="col-md-3">
+      <div class="card text-white bg-info mb-3 shadow">
+        <div class="card-body">
+          <h5 class="card-title">Tổng tin đăng</h5>
+          <p class="card-text display-6">{{ posts_count }}</p>
+          <small>Đã duyệt: {{ posts_approved }}</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lượt truy cập hôm nay -->
+    <div class="col-md-3">
+      <div class="card text-white bg-warning mb-3 shadow">
+        <div class="card-body">
+          <h5 class="card-title">Lượt truy cập hôm nay</h5>
+          <p class="card-text display-6">{{ visits_today }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lượt truy cập 7 ngày -->
+    <div class="col-md-3">
+      <div class="card text-white bg-dark mb-3 shadow">
+        <div class="card-body">
+          <h5 class="card-title">Truy cập 7 ngày</h5>
+          <p class="card-text display-6">{{ visits_week }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  {{ block.super }} {# Giữ nguyên danh sách app và model bên dưới #}
+</div>
+{% endblock %}

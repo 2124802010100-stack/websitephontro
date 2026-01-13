@@ -1,0 +1,25 @@
+{% extends "website/base.html" %}
+{% block main-content %}
+<div class="container" style="max-width:960px;margin:24px auto">
+  <div style="background:#f0f9ff;border:1px solid #e0f2fe;border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+    <span style="width:10px;height:10px;border-radius:50%;background:{% if current_vip.badge_color == 'red' %}#ef4444{% elif current_vip.badge_color == 'blue' %}#3b82f6{% else %}#ec4899{% endif %}"></span>
+    <div><strong>VIP hiện tại:</strong> {{ current_vip.get_plan_display }} • Hết hạn: {{ current_vip.expires_at|date:"d/m/Y H:i" }} (còn {{ remaining_days }} ngày ~ {{ remaining_hours }} giờ)</div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:18px">
+    <h2 style="margin-top:0">Xác nhận đổi gói VIP</h2>
+    <p>Bạn đang chọn đăng ký <strong>{{ new_plan|upper }}</strong> với giá <strong>{{ new_plan_price|floatformat:0 }}đ</strong>.</p>
+    <p>Số dư ví hiện tại: <strong>{{ wallet_balance|floatformat:0 }}đ</strong>.</p>
+    <p>Nếu tiếp tục, gói hiện tại sẽ kết thúc ngay và kích hoạt gói mới.</p>
+
+    <form method="post" action="{% url 'subscribe_vip' %}">
+      {% csrf_token %}
+      <input type="hidden" name="plan" value="{{ new_plan }}">
+      <input type="hidden" name="confirm" value="1">
+      <button type="submit" style="background:#ef4444;color:#fff;border:0;border-radius:10px;padding:10px 16px;cursor:pointer">OK, đổi gói</button>
+      <a href="{% url 'bang_gia_dich_vu' %}" style="margin-left:10px">Hủy</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

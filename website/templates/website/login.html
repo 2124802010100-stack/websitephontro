@@ -1,0 +1,732 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #667eea, #764ba2); /* nền giống đăng ký */
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 50px 60px;  /* form to hơn */
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      width: 420px;  /* rộng hơn */
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .welcome-text {
+      color: #6b7280;
+      margin-bottom: 25px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6b7280;
+      user-select: none;
+    }
+
+    .toggle-password:hover {
+      color: #667eea;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .btn-login:hover {
+      opacity: 0.9;
+    }
+
+    .btn-login:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .register-link {
+      margin-top: 20px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .register-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #fecaca;
+    }
+
+    .success-message {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #a7f3d0;
+    }
+
+    .lockout-timer {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #fde68a;
+      font-weight: 600;
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 14px;
+      background: #fff;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .btn-google:hover {
+      background: #f9fafb;
+      border-color: #999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-content {
+      background: #fff;
+      margin: 5% auto;
+      padding: 40px 50px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 480px;
+      position: relative;
+      animation: slideDown 0.4s ease;
+    }
+
+    .close-modal {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 32px;
+      font-weight: 300;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: 0.3s;
+      line-height: 1;
+    }
+
+    .close-modal:hover {
+      color: #667eea;
+      transform: rotate(90deg);
+    }
+
+    .forgot-step {
+      animation: fadeIn 0.3s ease;
+    }
+
+    .btn-modal {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .btn-modal-primary {
+      background: linear-gradient(to right, #2563eb, #3b82f6);
+      color: white;
+    }
+
+    .btn-modal-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-modal-success {
+      background: linear-gradient(to right, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-modal-success:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-modal-secondary {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .btn-modal-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-modal:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .modal-error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #fecaca;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-success {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #a7f3d0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-info {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #bfdbfe;
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <h2>Đăng nhập</h2>
+      <p class="welcome-text">Chào mừng bạn quay lại</p>
+
+      <!-- Thông báo lỗi từ server -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Thông báo lockout từ client -->
+      <div id="lockout-message" class="lockout-timer" style="display: none;">
+        🔒 Bạn đã nhập sai quá nhiều lần. Vui lòng đợi <span id="countdown"></span> để thử lại.
+      </div>
+
+      <form method="POST" id="loginForm">
+        {% csrf_token %}
+        <div class="input-group">
+          <input type="text" name="username" id="username" placeholder="Username" required value="{{ username|default:'' }}">
+        </div>
+        <div class="input-group">
+          <div class="password-wrapper">
+            <input type="password" name="password" id="password" placeholder="Password" required>
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+          </div>
+        </div>
+        <button type="submit" class="btn-login" id="loginBtn">Đăng nhập →</button>
+      </form>
+
+      <!-- Divider -->
+      <div style="margin: 25px 0; text-align: center; position: relative;">
+        <div style="border-top: 1px solid #ddd; position: absolute; top: 50%; left: 0; right: 0;"></div>
+        <span style="background: #fff; padding: 0 15px; color: #6b7280; font-size: 14px;">hoặc</span>
+      </div>
+
+      <!-- Google Login Button -->
+      {% load socialaccount %}
+      <a href="{% provider_login_url 'google' %}" class="btn-google" style="display: block; text-decoration: none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 10px;">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Đăng nhập bằng Google
+      </a>
+
+      <p class="register-link">Chưa có tài khoản? <a href="{% url 'register' %}">Đăng ký</a></p>
+      <p class="register-link"><a href="#" onclick="openForgotPasswordModal(); return false;">Quên mật khẩu?</a></p>
+    </div>
+  </div>
+
+  <!-- Modal Quên Mật Khẩu -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeForgotPasswordModal()">&times;</span>
+      <h2 style="margin-bottom: 10px;">Quên mật khẩu</h2>
+      <p class="welcome-text" style="margin-bottom: 20px;">Nhập email để nhận mã OTP</p>
+
+      <div id="modalMessages"></div>
+
+      <!-- Step 1: Nhập email -->
+      <div id="step1" class="forgot-step">
+        <form id="sendOtpForm" onsubmit="sendOTP(event)">
+          <div class="input-group">
+            <input type="email" id="resetEmail" name="resetEmail" placeholder="Email tài khoản" required>
+          </div>
+          <button type="submit" class="btn-modal btn-modal-primary" id="sendOtpBtn">
+            Gửi mã OTP
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: Nhập OTP và mật khẩu mới -->
+      <div id="step2" class="forgot-step" style="display: none;">
+        <input type="hidden" id="savedEmail">
+        <form id="resetPasswordForm" onsubmit="resetPassword(event)">
+          <div class="input-group">
+            <input type="text" id="otpCode" placeholder="Nhập mã OTP" required maxlength="6">
+          </div>
+          <div class="input-group">
+            <div class="password-wrapper">
+              <input type="password" id="newPassword" placeholder="Mật khẩu mới (tối thiểu 8 ký tự)" required minlength="8">
+              <span class="toggle-password" onclick="toggleModalPassword('newPassword')">👁️</span>
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="password-wrapper">
+              <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required minlength="8">
+              <span class="toggle-password" onclick="toggleModalPassword('confirmPassword')">👁️</span>
+            </div>
+          </div>
+          <button type="submit" class="btn-modal btn-modal-success" id="resetPasswordBtn">
+            Đặt lại mật khẩu
+          </button>
+          <button type="button" class="btn-modal btn-modal-secondary" onclick="backToStep1()">
+            ← Quay lại
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle password visibility
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = document.querySelector('.toggle-password');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+      }
+    }
+
+    // Toggle password trong modal
+    function toggleModalPassword(inputId) {
+      const passwordInput = document.getElementById(inputId);
+      const toggleBtn = event.target;
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+      }
+    }
+
+    // Modal functions
+    function openForgotPasswordModal() {
+      document.getElementById('forgotPasswordModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      resetModalState();
+    }
+
+    function closeForgotPasswordModal() {
+      document.getElementById('forgotPasswordModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      resetModalState();
+    }
+
+    function resetModalState() {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('modalMessages').innerHTML = '';
+      document.getElementById('sendOtpForm').reset();
+      document.getElementById('resetPasswordForm').reset();
+      document.getElementById('savedEmail').value = '';
+      document.getElementById('resetEmail').value = '';
+    }
+
+    function backToStep1() {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('modalMessages').innerHTML = '';
+    }
+
+    function showModalMessage(message, type) {
+      const messagesDiv = document.getElementById('modalMessages');
+      messagesDiv.innerHTML = `<div class="modal-${type}">${message}</div>`;
+    }
+
+    // Gửi OTP
+    async function sendOTP(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('resetEmail').value;
+      const btn = document.getElementById('sendOtpBtn');
+      const originalText = btn.textContent;
+
+      btn.disabled = true;
+      btn.textContent = 'Đang gửi...';
+
+      try {
+        const response = await fetch('{% url "forgot_password" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: `step=send&email=${encodeURIComponent(email)}`
+        });
+
+        let data;
+        const contentType = response.headers.get('content-type');
+
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // Fallback nếu trả về HTML
+          const text = await response.text();
+          if (text.includes('Email không tồn tại')) {
+            data = { success: false, error: 'Email không tồn tại' };
+          } else if (text.includes('sent')) {
+            data = { success: true };
+          } else {
+            data = { success: false, error: 'Có lỗi xảy ra. Vui lòng thử lại!' };
+          }
+        }
+
+        if (data.success) {
+          showModalMessage('✅ Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư!', 'success');
+
+          // Lưu email để dùng ở step 2
+          document.getElementById('savedEmail').value = email;
+
+          // Chuyển sang bước 2 sau 1.5 giây
+          setTimeout(() => {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+            document.getElementById('modalMessages').innerHTML = '';
+            showModalMessage('📧 Mã OTP có hiệu lực trong 10 phút', 'info');
+          }, 1500);
+        } else {
+          showModalMessage('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showModalMessage('❌ Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    // Đặt lại mật khẩu
+    async function resetPassword(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('savedEmail').value;
+      const otp = document.getElementById('otpCode').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Validate
+      if (newPassword !== confirmPassword) {
+        showModalMessage('❌ Mật khẩu xác nhận không khớp!', 'error');
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        showModalMessage('❌ Mật khẩu phải có ít nhất 8 ký tự!', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('resetPasswordBtn');
+      const originalText = btn.textContent;
+
+      btn.disabled = true;
+      btn.textContent = 'Đang xử lý...';
+
+      try {
+        const response = await fetch('{% url "forgot_password" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: `step=verify&email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}&new_password=${encodeURIComponent(newPassword)}&confirm_password=${encodeURIComponent(confirmPassword)}`
+        });
+
+        let data;
+        const contentType = response.headers.get('content-type');
+
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // Fallback nếu trả về HTML
+          const text = await response.text();
+          if (text.includes('OTP không hợp lệ') || text.includes('OTP không đúng')) {
+            data = { success: false, error: 'OTP không hợp lệ hoặc đã hết hạn' };
+          } else if (text.includes('Mật khẩu xác nhận không khớp')) {
+            data = { success: false, error: 'Mật khẩu xác nhận không khớp' };
+          } else if (text.toLowerCase().includes('login')) {
+            // Nếu redirect về login thì thành công
+            data = { success: true };
+          } else {
+            data = { success: false, error: 'Có lỗi xảy ra. Vui lòng thử lại!' };
+          }
+        }
+
+        if (data.success) {
+          showModalMessage('🎉 Đặt lại mật khẩu thành công! Đang chuyển đến trang đăng nhập...', 'success');
+
+          setTimeout(() => {
+            closeForgotPasswordModal();
+            window.location.reload();
+          }, 2000);
+        } else {
+          showModalMessage('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showModalMessage('❌ Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    // Đóng modal khi click bên ngoài
+    window.onclick = function(event) {
+      const modal = document.getElementById('forgotPasswordModal');
+      if (event.target === modal) {
+        closeForgotPasswordModal();
+      }
+    }
+
+    // Login attempt tracking
+    const LOGIN_ATTEMPTS_KEY = 'login_attempts';
+    const LOCKOUT_UNTIL_KEY = 'lockout_until';
+
+    function getLoginAttempts() {
+      return parseInt(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '0');
+    }
+
+    function setLoginAttempts(count) {
+      localStorage.setItem(LOGIN_ATTEMPTS_KEY, count.toString());
+    }
+
+    function getLockoutUntil() {
+      const lockout = localStorage.getItem(LOCKOUT_UNTIL_KEY);
+      return lockout ? parseInt(lockout) : null;
+    }
+
+    function setLockoutUntil(timestamp) {
+      localStorage.setItem(LOCKOUT_UNTIL_KEY, timestamp.toString());
+    }
+
+    function clearLockout() {
+      localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+      localStorage.removeItem(LOCKOUT_UNTIL_KEY);
+    }
+
+    function showLockoutMessage(remainingSeconds) {
+      const lockoutMsg = document.getElementById('lockout-message');
+      const countdown = document.getElementById('countdown');
+      const loginBtn = document.getElementById('loginBtn');
+
+      lockoutMsg.style.display = 'block';
+      loginBtn.disabled = true;
+
+      function updateCountdown() {
+        const now = Date.now();
+        const lockoutUntil = getLockoutUntil();
+
+        if (!lockoutUntil || now >= lockoutUntil) {
+          lockoutMsg.style.display = 'none';
+          loginBtn.disabled = false;
+          clearLockout();
+          return;
+        }
+
+        const remaining = Math.ceil((lockoutUntil - now) / 1000);
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        countdown.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        setTimeout(updateCountdown, 1000);
+      }
+
+      updateCountdown();
+    }
+
+    // Check lockout on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      const lockoutUntil = getLockoutUntil();
+      const now = Date.now();
+
+      if (lockoutUntil && now < lockoutUntil) {
+        showLockoutMessage();
+      } else if (lockoutUntil) {
+        clearLockout();
+      }
+    });
+
+    // Handle form submission
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      const lockoutUntil = getLockoutUntil();
+      const now = Date.now();
+
+      if (lockoutUntil && now < lockoutUntil) {
+        e.preventDefault();
+        showLockoutMessage();
+        return false;
+      }
+    });
+
+    // Track failed login attempts (called from server response)
+    {% if login_failed %}
+      const attempts = getLoginAttempts() + 1;
+      setLoginAttempts(attempts);
+
+      if (attempts >= 5) {
+        const lockoutMinutes = attempts === 5 ? 5 : 10;
+        const lockoutUntil = Date.now() + (lockoutMinutes * 60 * 1000);
+        setLockoutUntil(lockoutUntil);
+        showLockoutMessage();
+      }
+    {% endif %}
+  </script>
+</body>
+</html>

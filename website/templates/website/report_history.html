@@ -1,0 +1,92 @@
+{% extends 'website/base.html' %}
+{% load get_item %}
+{% block main-content %}
+<div class="container" style="max-width: 1100px; margin: 16px auto;">
+  <h1 style="font-size:20px; font-weight:700; margin-bottom:12px;">Lịch sử báo cáo vi phạm</h1>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+    <a href="?" class="btn-tab{% if not status %} active{% endif %}">Tất cả ({{ reports|length }})</a>
+    {% for key,label in status_choices %}
+      <a href="?status={{ key }}" class="btn-tab{% if status == key %} active{% endif %}">{{ label }} ({{ stats_map|get_item:key|default:0 }})</a>
+    {% endfor %}
+  </div>
+
+  <div class="card" style="background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb; text-align:left;">
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Bài đăng</th>
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Lý do</th>
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Trạng thái</th>
+          <!-- Xóa cột cảnh báo -->
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Mô tả báo cáo</th>
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Thời gian</th>
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Xem bài</th>
+          <th style="padding:10px 12px; border-bottom:1px solid #eee;">Xóa</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+          <tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:10px 12px;">
+              {% if r.post %}
+                <div style="font-weight:600;">{{ r.post.title|default:'(Đã xóa)' }}</div>
+                <div style="font-size:12px; color:#6b7280;">#{{ r.post.id }}</div>
+              {% else %}
+                <em>(Bài đăng không còn tồn tại)</em>
+              {% endif %}
+            </td>
+            <td style="padding:10px 12px;">
+              {{ r.get_reason_display }}
+            </td>
+            <td style="padding:10px 12px;">
+              {% with r.status as st %}
+                {% if st == 'pending' %}
+                  <span class="badge" style="background:#fff7ed; color:#92400e; border:1px solid #ffedd5; padding:4px 8px; border-radius:999px; font-size:12px;">Chờ xử lý</span>
+                {% elif st == 'reviewing' %}
+                  <span class="badge" style="background:#eff6ff; color:#1e40af; border:1px solid #dbeafe; padding:4px 8px; border-radius:999px; font-size:12px;">Đang xem xét</span>
+                {% elif st == 'resolved' %}
+                  <span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #d1fae5; padding:4px 8px; border-radius:999px; font-size:12px;">Đã xử lý</span>
+                {% elif st == 'rejected' %}
+                  <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:4px 8px; border-radius:999px; font-size:12px;">Từ chối</span>
+                {% else %}
+                  {{ r.status }}
+                {% endif %}
+              {% endwith %}
+            </td>
+            <!-- Xóa nội dung cảnh báo -->
+            <td style="padding:10px 12px; font-size:13px; color:#374151;">
+              {{ r.description|default:'—' }}
+            </td>
+            <td style="padding:10px 12px; font-size:12px; color:#6b7280;">
+              {{ r.created_at|date:'d/m/Y H:i' }}
+            </td>
+            <td style="padding:10px 12px;">
+              {% if r.post %}
+                <a href="{% url 'post_detail' r.post.id %}" class="btn-link" style="color:#2563eb; text-decoration:none;">Xem</a>
+              {% else %}
+                <span style="font-size:12px; color:#9ca3af;">—</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px 12px;">
+              <form method="post" action="{% url 'delete_report' r.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="padding:14px; text-align:center; color:#6b7280;">Chưa có báo cáo nào.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.btn-tab{display:inline-block; padding:6px 10px; border:1px solid #e5e7eb; border-radius:999px; font-size:12px; color:#111827; text-decoration:none; background:#fff}
+.btn-tab.active{background:#111827; color:#fff; border-color:#111827}
+</style>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'website/base.html' %}
+
+{% block title %}Không có quyền truy cập{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center">
+        <h1 class="display-4">🚫 Không có quyền truy cập</h1>
+        <p class="lead">Dashboard Analytics chỉ dành cho Chủ trọ.</p>
+        <p>Bạn cần có tài khoản Chủ trọ để xem trang này.</p>
+        <a href="{% url 'home' %}" class="btn btn-primary mt-3">Về trang chủ</a>
+    </div>
+</div>
+{% endblock %}

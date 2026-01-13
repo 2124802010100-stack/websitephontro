@@ -1,0 +1,233 @@
+{% extends 'website/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block main-content %}
+<div class="history-container" style="min-height: 100vh; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); width: 100%; padding: 0; margin: 0;">
+    <!-- Hero Section -->
+    <div class="hero-section" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 0; position: relative; overflow: hidden; width: 100%;">
+        <div style="position: absolute; top: 0; right: 0; width: 50%; height: 100%; background: url('data:image/svg+xml,<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"rgba(255,255,255,0.05)\"/></svg> "></div>
+
+        <div style="max-width: 100%; margin: 0; padding: 48px 48px 80px; position: relative; z-index: 1;">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 24px;">
+                {% if request.user.customerprofile.role == 'owner' %}
+                <span style="color: rgba(255, 255, 255, 0.9); font-size: 18px; font-weight: 600;">Trang chủ / Ví tiền / Lịch sử thanh toán</span>
+                {% else %}
+                <span style="color: rgba(255, 255, 255, 0.9); font-size: 18px; font-weight: 600;">Trang chủ / Lịch sử đặt cọc</span>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: start;">
+                <!-- Page Info -->
+                <div>
+                    {% if request.user.customerprofile.role == 'owner' %}
+                    <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.5px;">Lịch sử thanh toán</h1>
+                    <p style="margin: 0; font-size: 15px; color: rgba(255, 255, 255, 0.8); font-weight: 400;">Theo dõi tất cả các khoản chi tiêu từ ví của bạn</p>
+                    {% else %}
+                    <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.5px;">Lịch sử đặt cọc</h1>
+                    <p style="margin: 0; font-size: 15px; color: rgba(255, 255, 255, 0.8); font-weight: 400;">Theo dõi các khoản đặt cọc phòng trọ của bạn</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div style="max-width: 100%; margin: -50px 0 0; padding: 0 48px 48px; position: relative; z-index: 2;">
+
+        <!-- Transactions List -->
+        <div style="background: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid #e5e7eb; overflow: hidden;">
+            <!-- Header -->
+            <div style="padding: 28px 32px; border-bottom: 1px solid #f3f4f6; background: #fafbfc;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        {% if request.user.customerprofile.role == 'owner' %}
+                        <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #1f2937;">Chi tiết thanh toán</h2>
+                        <p style="margin: 0; font-size: 14px; color: #6b7280;">Chỉ hiển thị các giao dịch chi tiêu (âm tiền)</p>
+                        {% else %}
+                        <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #1f2937;">Chi tiết đặt cọc</h2>
+                        <p style="margin: 0; font-size: 14px; color: #6b7280;">Danh sách các khoản đặt cọc phòng trọ của bạn</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions -->
+            <div style="padding: 8px; max-height: 800px; overflow-y: auto;">
+                {% if page_obj %}
+                    {% for transaction in page_obj %}
+                    <a href="{% url 'payment_transaction_detail' transaction.transaction_id %}" style="text-decoration: none; color: inherit; display: block;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px; margin: 8px; background: #fafbfc; border-radius: 12px; border: 1px solid #f3f4f6; transition: all 0.2s ease; cursor: pointer;" class="transaction-item">
+                            <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+                                <!-- Icon -->
+                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="2"/>
+                                        <path d="M15 9l-6 6M9 9l6 6" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+
+                            <!-- Info -->
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; color: #1f2937; font-size: 16px; margin-bottom: 6px;">{{ transaction.description|default:transaction.get_payment_method_display }}</div>
+                                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <div style="font-size: 13px; color: #6b7280;">
+                                        <span style="font-weight: 500;">Mã GD:</span>
+                                        <span style="font-family: monospace; background: #e5e7eb; padding: 3px 8px; border-radius: 6px; margin-left: 4px; font-weight: 600;">{{ transaction.transaction_id }}</span>
+                                    </div>
+                                    <div style="font-size: 13px; color: #6b7280;">
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                                            <path d="M7 0C3.1 0 0 3.1 0 7s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z" fill="currentColor"/>
+                                            <path d="M6 3h2v4H6zM6 8h2v2H6z" fill="currentColor"/>
+                                        </svg>
+                                        {{ transaction.created_at|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amount & Status -->
+                        <div style="text-align: right; margin-left: 24px; flex-shrink: 0;">
+                            <div style="font-weight: 700; font-size: 20px; color: #dc2626; margin-bottom: 8px; white-space: nowrap;">
+                                {{ transaction.amount|intcomma }} ₫
+                            </div>
+                            <div style="font-size: 13px; padding: 6px 16px; border-radius: 8px; display: inline-block; font-weight: 600; background: {% if transaction.status == 'completed' %}#dcfce7{% elif transaction.status == 'pending' %}#fef3c7{% else %}#fee2e2{% endif %}; color: {% if transaction.status == 'completed' %}#166534{% elif transaction.status == 'pending' %}#92400e{% else %}#991b1b{% endif %};">
+                                {{ transaction.get_status_display }}
+                            </div>
+                            <!-- View Details Arrow -->
+                            <div style="margin-top: 8px;">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="opacity: 0.5;">
+                                    <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    </a>
+                    {% endfor %}
+
+                    {% if page_obj.has_other_pages %}
+                    <div style="padding: 32px 24px 24px; text-align: center; border-top: 1px solid #f3f4f6; margin-top: 16px;">
+                        <div style="display: inline-flex; gap: 8px; align-items: center;">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1" style="padding: 10px 14px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 40px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M10 12L6 8l4-4M8 12L4 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+                                <a href="?page={{ page_obj.previous_page_number }}" style="padding: 10px 14px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 40px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+                            {% endif %}
+
+                            <span style="padding: 10px 20px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-radius: 8px; font-size: 14px; font-weight: 700;">
+                                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                            </span>
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}" style="padding: 10px 14px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 40px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}" style="padding: 10px 14px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 40px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M6 4l4 4-4 4M8 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <!-- Empty State -->
+                    <div style="text-align: center; padding: 80px 32px;">
+                        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                                <path d="M50 15H10a5 5 0 00-5 5v20a5 5 0 005 5h40a5 5 0 005-5V20a5 5 0 00-5-5z" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 25h50M20 35h20" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        {% if request.user.customerprofile.role == 'owner' %}
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">Chưa có chi tiêu</h3>
+                        <p style="font-size: 15px; color: #6b7280; margin: 0 0 28px 0;">Khi bạn đăng ký dịch vụ hoặc gia hạn, giao dịch sẽ hiển thị tại đây.</p>
+                        <a href="{% url 'bang_gia_dich_vu' %}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                            Xem bảng giá dịch vụ
+                        </a>
+                        {% else %}
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">Chưa có đặt cọc</h3>
+                        <p style="font-size: 15px; color: #6b7280; margin: 0 0 28px 0;">Khi bạn đặt cọc phòng trọ, thông tin sẽ hiển thị tại đây.</p>
+                        <a href="{% url 'home' %}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                            Tìm phòng trọ
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hover Effects */
+    .hero-section a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .hero-section a:first-child:hover {
+        background: #f8fafc !important;
+    }
+
+    .hero-section a:last-child:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Transaction Items Hover */
+    .transaction-item:hover {
+        background: #fff1f2 !important;
+        border-color: #dc2626 !important;
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
+    }
+
+    /* Custom Scrollbar */
+    div[style*="max-height: 800px"]::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    div[style*="max-height: 800px"]::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+
+    div[style*="max-height: 800px"]::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    div[style*="max-height: 800px"]::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section > div > div:first-child {
+            grid-template-columns: 1fr !important;
+        }
+
+        div[style*="padding: 24px"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 16px !important;
+        }
+
+        div[style*="padding: 24px"] > div:last-child {
+            margin-left: 0 !important;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

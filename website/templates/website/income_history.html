@@ -1,0 +1,92 @@
+{% extends 'website/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block main-content %}
+<div class="history-container" style="min-height: 100vh; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); width: 100%; padding: 0; margin: 0;">
+    <div class="hero-section" style="background: linear-gradient(135deg, #065f46 0%, #10b981 100%); padding: 0; position: relative; overflow: hidden; width: 100%;">
+        <div style="max-width: 100%; margin: 0; padding: 48px 48px 80px; position: relative; z-index: 1;">
+            <div style="margin-bottom: 24px;">
+                <span style="color: rgba(255, 255, 255, 0.9); font-size: 18px; font-weight: 600;">Trang chủ / Ví tiền / Lịch sử nhận tiền</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: start;">
+                <div>
+                    <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.5px;">Lịch sử nhận tiền</h1>
+                    <p style="margin: 0; font-size: 15px; color: rgba(255, 255, 255, 0.85); font-weight: 400;">Các khoản được cộng vào ví của bạn (đặt cọc, thanh toán, hoàn tiền,...)</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
+                    <a href="{% url 'wallet' %}" style="background: rgba(255, 255, 255, 0.2); color: white; padding: 16px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); transition: all 0.3s ease;">Về ví</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="max-width: 100%; margin: -50px 0 0; padding: 0 48px 48px; position: relative; z-index: 2;">
+        <div style="background: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid #e5e7eb; overflow: hidden;">
+            <div style="padding: 28px 32px; border-bottom: 1px solid #f3f4f6; background: #fafbfc;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #1f2937;">Các khoản được cộng tiền</h2>
+                        <p style="margin: 0; font-size: 14px; color: #6b7280;">Chỉ hiển thị các giao dịch dương tiền</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 8px; max-height: 800px; overflow-y: auto;">
+                {% if page_obj %}
+                    {% for transaction in page_obj %}
+                    <a href="{% url 'income_transaction_detail' transaction.transaction_id %}" style="text-decoration: none; color: inherit; display: block;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 24px; margin: 8px; background: #f0fdf4; border-radius: 12px; border: 1px solid #dcfce7; transition: all 0.2s ease; cursor: pointer;" class="transaction-item">
+                            <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/>
+                                        <path d="M9 12l2 2 4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 600; color: #1f2937; font-size: 16px; margin-bottom: 6px;">{{ transaction.description|default:transaction.get_payment_method_display }}</div>
+                                    <div style="font-size: 13px; color: #6b7280;">{{ transaction.created_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; margin-left: 24px; flex-shrink: 0;">
+                                <div style="font-weight: 700; font-size: 20px; color: #16a34a; margin-bottom: 8px; white-space: nowrap;">+{{ transaction.amount|intcomma }} ₫</div>
+                                <div style="font-size: 13px; padding: 6px 16px; border-radius: 8px; display: inline-block; font-weight: 600; background: {% if transaction.status == 'completed' %}#dcfce7{% elif transaction.status == 'pending' %}#fef3c7{% else %}#fee2e2{% endif %}; color: {% if transaction.status == 'completed' %}#166534{% elif transaction.status == 'pending' %}#92400e{% else %}#991b1b{% endif %};">
+                                    {{ transaction.get_status_display }}
+                                </div>
+                                <!-- View Details Arrow -->
+                                <div style="margin-top: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="opacity: 0.5;">
+                                        <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 80px 32px;">
+                        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                                <path d="M50 15H10a5 5 0 00-5 5v20a5 5 0 005 5h40a5 5 0 005-5V20a5 5 0 00-5-5z" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 25h50M40 35h10" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">Chưa có khoản nào</h3>
+                        <p style="font-size: 15px; color: #6b7280; margin: 0;">Khi có khoản tiền được cộng vào ví, hệ thống sẽ hiển thị tại đây.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .transaction-item:hover {
+        background: #ecfdf5 !important;
+        border-color: #10b981 !important;
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+    }
+</style>
+{% endblock %}

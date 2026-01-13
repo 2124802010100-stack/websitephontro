@@ -1,0 +1,139 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .ai-alert-widget {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
+            50% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
+            100% { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
+        }
+
+        .flagged-post:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- AI Moderation Alert Widget -->
+    {% include 'admin/ai_moderation_widget.html' %}
+
+    <!-- Original Dashboard Content -->
+    <div class="dashboard">
+        <div class="dashboard-content">
+            <div class="dashboard-header">
+                <h1>{% trans 'Dashboard' %}</h1>
+            </div>
+
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <h3>{{ users_count }}</h3>
+                        <p>{% trans 'Users' %}</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🔐</div>
+                    <div class="stat-content">
+                        <h3>{{ logged_in_count }}</h3>
+                        <p>{% trans 'Logged in' %}</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-content">
+                        <h3>{{ posts_count }}</h3>
+                        <p>{% trans 'Total posts' %}</p>
+                        <small>{% trans 'Approved' %}: {{ posts_approved }}</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-content">
+                        <h3>{{ visits_today }}</h3>
+                        <p>{% trans 'Visits today' %}</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3>{{ visits_week }}</h3>
+                        <p>{% trans 'Visits 7 days' %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .dashboard {
+            padding: 20px;
+        }
+
+        .dashboard-header h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 50%;
+        }
+
+        .stat-content h3 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .stat-content p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stat-content small {
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+{% endblock %}

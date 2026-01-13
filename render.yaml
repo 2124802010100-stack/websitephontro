@@ -1,0 +1,22 @@
+services:
+  # Web Service - Django Application
+  - type: web
+    name: phongtro
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn PhongTro.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: PhongTro.settings_render
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+
+databases:
+  # PostgreSQL Database
+  - name: phongtro-db
+    databaseName: phongtro
+    user: phongtro

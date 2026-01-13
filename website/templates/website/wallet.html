@@ -1,0 +1,210 @@
+{% extends 'website/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block main-content %}
+<div class="wallet-container" style="min-height: 100vh; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); width: 100%; padding: 0; margin: 0;">
+    <!-- Hero Section with Balance -->
+    <div class="hero-section" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 0; position: relative; overflow: hidden; width: 100%;">
+        <div style="position: absolute; top: 0; right: 0; width: 50%; height: 100%; background: url('data:image/svg+xml,<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"rgba(255,255,255,0.05)\"/></svg></div>
+
+    <div style="max-width: 1200px; margin: 0 auto; padding: 48px 48px 80px; position: relative; z-index: 1; box-sizing: border-box;">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 24px;">
+                <span style="color: rgba(255, 255, 255, 0.9); font-size: 18px; font-weight: 600;">Trang chủ / Ví tiền</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: start;">
+                <!-- Balance Info -->
+                <div>
+                    <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.5px;">Ví tiền của bạn</h1>
+                    <p style="margin: 0 0 32px 0; font-size: 15px; color: rgba(255, 255, 255, 0.8); font-weight: 400;">Quản lý số dư và theo dõi giao dịch</p>
+
+                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 32px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
+                        <div style="color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Số dư khả dụng</div>
+                        <div style="font-size: 48px; font-weight: 800; color: white; line-height: 1; margin-bottom: 4px;">
+                            {{ wallet.balance|intcomma }} <span style="font-size: 24px; font-weight: 600; opacity: 0.9;">₫</span>
+                        </div>
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-top: 12px;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity: 0.8;">
+                                    <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z" fill="currentColor"/>
+                                    <path d="M7 4h2v5H7zM7 10h2v2H7z" fill="currentColor"/>
+                                </svg>
+                                Ngày tạo: {{ wallet.created_at|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div style="display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
+                    <a href="{% url 'recharge' %}" style="background: white; color: #1e40af; padding: 16px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; border: none;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        Nạp tiền
+                    </a>
+                    <a href="{% url 'recharge_history' %}" style="background: rgba(255, 255, 255, 0.2); color: white; padding: 16px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); transition: all 0.3s ease;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 18c4.4 0 8-3.6 8-8s-3.6-8-8-8-8 3.6-8 8 3.6 8 8 8z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <path d="M10 5v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        Lịch sử
+                    </a>
+                    <a href="{% url 'income_history' %}" style="background: rgba(255, 255, 255, 0.2); color: white; padding: 16px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); transition: all 0.3s ease;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Nhận tiền
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div style="max-width: 100%; margin: -50px 0 0; padding: 0 48px 48px; position: relative; z-index: 2;">
+
+        <!-- Stats Cards removed per request -->
+
+    <!-- Recent Transactions -->
+    <div style="background: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid #e5e7eb; overflow: hidden; margin-top: 56px;">
+            <!-- Header -->
+            <div style="padding: 28px 32px; border-bottom: 1px solid #f3f4f6; background: #fafbfc;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #1f2937;">Giao dịch gần đây</h2>
+                        <p style="margin: 0; font-size: 14px; color: #6b7280;">Danh sách các giao dịch mới nhất</p>
+                    </div>
+                    <a href="{% url 'recharge_history' %}" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; padding: 10px 20px; background: #eff6ff; border-radius: 10px; transition: all 0.3s ease;">
+                        Xem tất cả
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Transactions List -->
+            <div style="padding: 8px;">
+                {% if recent_transactions %}
+                    {% for transaction in recent_transactions %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; margin: 8px; background: #fafbfc; border-radius: 12px; border: 1px solid #f3f4f6; transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                            <!-- Icon -->
+                            <div style="width: 48px; height: 48px; background: {% if transaction.status == 'completed' %}linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%){% elif transaction.status == 'pending' %}linear-gradient(135deg, #fef3c7 0%, #fde68a 100%){% else %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% endif %}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                {% if transaction.status == 'completed' %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/>
+                                    <path d="M9 12l2 2 4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                {% elif transaction.status == 'pending' %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2"/>
+                                    <path d="M12 6v6l4 2" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                {% else %}
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="2"/>
+                                    <path d="M15 9l-6 6M9 9l6 6" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                {% endif %}
+                            </div>
+
+                            <!-- Info -->
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; color: #1f2937; font-size: 15px; margin-bottom: 4px;">{{ transaction.get_payment_method_display }}</div>
+                                <div style="font-size: 13px; color: #6b7280;">{{ transaction.created_at|date:"d/m/Y • H:i" }}</div>
+                                {% if transaction.description %}
+                                <div style="font-size: 13px; color: #9ca3af; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ transaction.description|truncatechars:50 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Amount & Status -->
+                        <div style="text-align: right; margin-left: 24px; flex-shrink: 0;">
+                            <div style="font-weight: 700; font-size: 18px; color: {% if transaction.amount|floatformat:0|add:'0'|slice:':-1'|add:0 >= 0 %}#16a34a{% else %}#dc2626{% endif %}; margin-bottom: 6px; white-space: nowrap;">
+                                {{ transaction.amount|intcomma }} ₫
+                            </div>
+                            <div style="font-size: 12px; padding: 4px 12px; border-radius: 6px; display: inline-block; font-weight: 600; background: {% if transaction.status == 'completed' %}#dcfce7{% elif transaction.status == 'pending' %}#fef3c7{% else %}#fee2e2{% endif %}; color: {% if transaction.status == 'completed' %}#166534{% elif transaction.status == 'pending' %}#92400e{% else %}#991b1b{% endif %};">
+                                {% if transaction.status == 'completed' %}Thành công
+                                {% elif transaction.status == 'pending' %}Chờ xử lý
+                                {% elif transaction.status == 'failed' %}Thất bại
+                                {% else %}Đã hủy{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty State -->
+                    <div style="text-align: center; padding: 80px 32px;">
+                        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                                <path d="M50 15H10a5 5 0 00-5 5v20a5 5 0 005 5h40a5 5 0 005-5V20a5 5 0 00-5-5z" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 25h50M15 35h10" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">Chưa có giao dịch</h3>
+                        <p style="font-size: 15px; color: #6b7280; margin: 0 0 28px 0;">Bạn chưa thực hiện giao dịch nào. Hãy nạp tiền để bắt đầu!</p>
+                        <a href="{% url 'recharge' %}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                            Nạp tiền ngay
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hover Effects */
+    .hero-section a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .hero-section a:first-child:hover {
+        background: #f8fafc !important;
+    }
+
+    .hero-section a:last-child:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Stats Cards Hover */
+    div[style*="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))"] > div:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-2px);
+        border-color: #3b82f6 !important;
+    }
+
+    /* Transaction Items Hover */
+    div[style*="padding: 8px"] > div:hover {
+        background: #eff6ff !important;
+        border-color: #bfdbfe !important;
+        transform: translateX(4px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section > div > div:first-child {
+            grid-template-columns: 1fr !important;
+        }
+
+        div[style*="padding: 20px 24px"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 16px !important;
+        }
+
+        div[style*="padding: 20px 24px"] > div:last-child {
+            margin-left: 0 !important;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,37 @@
+# Django và các package cơ bản
+Django>=4.2.10
+django-allauth>=0.57.0  # Đăng nhập bằng Google OAuth
+channels>=4.0.0
+widget-tweaks>=1.4.13
+django-humanize>=4.8.0
+
+# Database
+psycopg2-binary>=2.9.0  # PostgreSQL
+
+# GeoDjango for mapping features
+GDAL>=3.4.0  # Geospatial Data Abstraction Library
+
+# Các package khác (nếu có)
+# Thêm các package khác của dự án vào đây
+
+# RAG / Embeddings dependencies
+# Pin numpy<2 to avoid ABI mismatch with TensorFlow/compiled extensions expecting NumPy 1.x
+numpy<2
+# Core embedding stack (sentence-transformers pulls transformers). Torch provides backend; CPU install is fine.
+sentence-transformers>=2.2.2
+torch>=2.2.0
+
+# Groq client
+groq>=0.5.0
+
+# Form/field helpers
+django-multiselectfield>=0.1.12
+PyJWT>=2.8.0
+python-dateutil>=2.9.0
+pytz>=2024.1
+
+# Production server
+gunicorn>=21.2.0
+whitenoise>=6.6.0
+dj-database-url>=2.1.0
+

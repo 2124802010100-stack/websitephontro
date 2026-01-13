@@ -1,0 +1,204 @@
+<!-- AI Moderation Alert Widget -->
+{% if ai_stats.total_flagged > 0 %}
+{% csrf_token %}
+<div class="ai-alert-widget" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 2px solid #fca5a5; border-radius: 12px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
+    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+        <div style="background: #dc2626; color: white; padding: 8px 12px; border-radius: 8px; margin-right: 12px; font-weight: bold;">
+            🚨 AI ALERT
+        </div>
+        <div>
+            <h3 style="margin: 0; color: #dc2626; font-size: 18px;">Tin đăng đáng ngờ cần kiểm tra</h3>
+            <p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 14px;">
+                {{ ai_stats.total_flagged }} tin đã gắn cờ AI | {{ ai_stats.high_confidence_flagged }} tin độ tin cậy cao
+            </p>
+        </div>
+    </div>
+
+    <!-- Danh sách tin đáng ngờ -->
+    <div style="max-height: 300px; overflow-y: auto;">
+        {% for post in ai_flagged_posts %}
+        <div class="flagged-post" data-post-id="{{ post.id }}" style="background: white; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 10px; transition: all 0.2s;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">
+                        <a href="/admin/website/rentalpost/{{ post.id }}/change/" style="color: #dc2626; text-decoration: none;">
+                            {{ post.title|truncatechars:60 }}
+                        </a>
+                    </h4>
+                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">
+                        <strong>Người đăng:</strong> {{ post.user.username }} |
+                        <strong>Thời gian:</strong> {{ post.created_at|date:"d/m/Y H:i" }}
+                    </p>
+                    <p style="margin: 0; color: #7f1d1d; font-size: 13px; font-style: italic;">
+                        <strong>Lý do AI:</strong> {{ post.ai_reason }}
+                    </p>
+                </div>
+                <div style="text-align: right; margin-left: 15px;">
+                    <div style="background: #dc2626; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 5px; font-weight: bold;">
+                        Confidence: {{ post.ai_confidence|floatformat:2 }}
+                    </div>
+                    <div style="display: flex; gap: 5px; margin-top: 8px;">
+                        <a href="/admin/website/rentalpost/{{ post.id }}/change/"
+                           style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; transition: all 0.2s;">
+                            👁️ Xem
+                        </a>
+                        <button
+                                id="approve-btn-{{ post.id }}" data-approve="{{ post.id }}"
+                                style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            ✅ Duyệt
+                        </button>
+                        <button
+                                id="reject-btn-{{ post.id }}" data-reject="{{ post.id }}"
+                                style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            ❌ Từ chối
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function setButtonLoading(buttonId, isLoading) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+        if (isLoading) {
+            button.disabled = true;
+            button.innerHTML = '⏳ Đang xử lý...';
+            button.style.opacity = '0.6';
+        } else {
+            button.disabled = false;
+            button.style.opacity = '1';
+        }
+    }
+}
+
+function quickApprove(postId) {
+    if (confirm('Bạn có chắc muốn duyệt tin này?')) {
+        const approveBtn = `approve-btn-${postId}`;
+        const rejectBtn = `reject-btn-${postId}`;
+
+        setButtonLoading(approveBtn, true);
+        setButtonLoading(rejectBtn, true);
+
+    fetch(`/admin/moderation/approve/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Thay đổi giao diện trước khi reload
+                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postElement) {
+                    postElement.style.background = '#f0fdf4';
+                    postElement.style.border = '2px solid #10b981';
+                }
+
+                setTimeout(() => {
+                    alert('✅ Đã duyệt tin thành công!');
+                    location.reload();
+                }, 500);
+            } else {
+                alert('❌ Lỗi: ' + data.message);
+                setButtonLoading(approveBtn, false);
+                setButtonLoading(rejectBtn, false);
+            }
+        })
+        .catch(error => {
+            alert('❌ Lỗi kết nối: ' + error.message);
+            setButtonLoading(approveBtn, false);
+            setButtonLoading(rejectBtn, false);
+        });
+    }
+}
+
+function quickReject(postId) {
+    if (confirm('Bạn có chắc muốn từ chối tin này?')) {
+        const approveBtn = `approve-btn-${postId}`;
+        const rejectBtn = `reject-btn-${postId}`;
+
+        setButtonLoading(approveBtn, true);
+        setButtonLoading(rejectBtn, true);
+
+    fetch(`/admin/moderation/reject/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Thay đổi giao diện trước khi reload
+                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postElement) {
+                    postElement.style.background = '#fef2f2';
+                    postElement.style.border = '2px solid #ef4444';
+                }
+
+                setTimeout(() => {
+                    alert('✅ Đã từ chối tin thành công!');
+                    location.reload();
+                }, 500);
+            } else {
+                alert('❌ Lỗi: ' + data.message);
+                setButtonLoading(approveBtn, false);
+                setButtonLoading(rejectBtn, false);
+            }
+        })
+        .catch(error => {
+            alert('❌ Lỗi kết nối: ' + error.message);
+            setButtonLoading(approveBtn, false);
+            setButtonLoading(rejectBtn, false);
+        });
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const approveBtn = e.target.closest('[data-approve]');
+    const rejectBtn = e.target.closest('[data-reject]');
+    if (approveBtn) {
+        const id = approveBtn.getAttribute('data-approve');
+        quickApprove(id);
+    }
+    if (rejectBtn) {
+        const id = rejectBtn.getAttribute('data-reject');
+        quickReject(id);
+    }
+});
+</script>
+{% endif %}

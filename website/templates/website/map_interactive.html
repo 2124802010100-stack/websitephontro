@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản Đồ Tìm Phòng Trọ - PhongTro.NMA</title>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet MarkerCluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    #map-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    #map {
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    /* Sidebar Filters */
+    #filter-sidebar {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 320px;
+        max-height: calc(100vh - 40px);
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        overflow-y: auto;
+        transition: transform 0.3s ease;
+    }
+
+    #filter-sidebar.collapsed {
+        transform: translateX(-340px);
+    }
+
+    .sidebar-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sidebar-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .toggle-sidebar {
+        position: absolute;
+        top: 20px;
+        left: 340px;
+        background: white;
+        border: none;
+        padding: 12px 16px;
+        border-radius: 0 8px 8px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        cursor: pointer;
+        z-index: 999;
+        transition: all 0.3s ease;
+    }
+
+    #filter-sidebar.collapsed + .toggle-sidebar {
+        left: 0;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .toggle-sidebar:hover {
+        background: #f0f0f0;
+    }
+
+    .filter-section {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .filter-section:last-child {
+        border-bottom: none;
+    }
+
+    .filter-section h4 {
+        margin: 0 0 15px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-section h4 i {
+        color: #667eea;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .price-range-values {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        font-size: 12px;
+        color: #999;
+    }
+
+    .poi-checkboxes {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 5px;
+    }
+
+    .poi-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .poi-checkbox:hover {
+        background: #f5f5f5;
+    }
+
+    .poi-checkbox input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .poi-checkbox label {
+        margin: 0;
+        cursor: pointer;
+        font-size: 13px;
+        color: #333;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        width: 100%;
+        padding: 10px;
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    /* Legend */
+    .map-legend {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    .map-legend h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* Custom Popup */
+    .leaflet-popup-content-wrapper {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .popup-content {
+        padding: 0;
+        margin: 0;
+        min-width: 280px;
+    }
+
+    .popup-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .popup-body {
+        padding: 15px;
+    }
+
+    .popup-title {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .popup-price {
+        color: #e74c3c;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .popup-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        color: #666;
+    }
+
+    .popup-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+
+    .feature-badge {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .popup-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .popup-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .popup-btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .popup-btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .popup-btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .popup-btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        display: none;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* POI Icons */
+    .poi-marker {
+        background: white;
+        border: 2px solid #333;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .poi-marker.school { border-color: #3498db; color: #3498db; }
+    .poi-marker.hospital { border-color: #e74c3c; color: #e74c3c; }
+    .poi-marker.supermarket { border-color: #2ecc71; color: #2ecc71; }
+    .poi-marker.bus_station { border-color: #f39c12; color: #f39c12; }
+    .poi-marker.train_station { border-color: #9b59b6; color: #9b59b6; }
+    .poi-marker.metro_station { border-color: #1abc9c; color: #1abc9c; }
+
+    /* Results Counter */
+    .results-counter {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        #filter-sidebar {
+            width: 100%;
+            max-width: 300px;
+            top: 10px;
+            left: 10px;
+        }
+
+        .toggle-sidebar {
+            left: 310px;
+        }
+
+        #filter-sidebar.collapsed + .toggle-sidebar {
+            left: 0;
+        }
+
+        .map-legend {
+            bottom: 10px;
+            right: 10px;
+            font-size: 11px;
+        }
+    }
+</style>
+
+</style>
+</head>
+<body>
+<div id="map-container">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Filter Sidebar -->
+    <div id="filter-sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-filter"></i> Bộ Lọc Tìm Kiếm</h3>
+        </div>
+
+        <div class="filter-section">
+            <h4><i class="fas fa-dollar-sign"></i> Giá Phòng</h4>
+            <div class="form-group">
+                <label for="minPrice">Giá tối thiểu (VNĐ)</label>
+                <input type="number" id="minPrice" class="form-control" placeholder="0" min="0" step="100000">
+            </div>
+            <div class="form-group">
+                <label for="maxPrice">Giá tối đa (VNĐ)</label>
+                <input type="number" id="maxPrice" class="form-control" placeholder="10,000,000" min="0" step="100000">
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h4><i class="fas fa-map-marker-alt"></i> Bán Kính Tìm Kiếm</h4>
+            <div class="form-group">
+                <label for="searchRadius">Trong bán kính (km)</label>
+                <input type="range" id="searchRadius" class="form-control" min="0.5" max="20" step="0.5" value="5">
+                <div class="price-range-values">
+                    <span>0.5 km</span>
+                    <span id="radiusValue">5 km</span>
+                    <span>20 km</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn-secondary" id="useMyLocation">
+                    <i class="fas fa-crosshairs"></i> Sử dụng vị trí của tôi
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h4><i class="fas fa-home"></i> Loại Phòng</h4>
+            <div class="form-group">
+                <select id="categoryFilter" class="form-control">
+                    <option value="">Tất cả</option>
+                    <option value="phongtro">Phòng trọ, nhà trọ</option>
+                    <option value="nhanguyencan">Nhà nguyên căn</option>
+                    <option value="canho">Căn hộ</option>
+                    <option value="canho_mini">Căn hộ mini</option>
+                    <option value="canho_dichvu">Căn hộ dịch vụ</option>
+                    <option value="oghep">Tìm người ở ghép</option>
+                    <option value="matbang">Mặt bằng + Văn phòng</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <button type="button" class="btn-primary" id="applyFilters">
+                <i class="fas fa-search"></i> Áp Dụng Bộ Lọc
+            </button>
+            <button type="button" class="btn-secondary" id="resetFilters">
+                <i class="fas fa-redo"></i> Đặt Lại
+            </button>
+        </div>
+    </div>
+
+    <!-- Toggle Sidebar Button -->
+    <button class="toggle-sidebar" id="toggleSidebar">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <!-- Results Counter -->
+    <div class="results-counter" id="resultsCounter">
+        <i class="fas fa-home"></i> <span id="resultCount">0</span> phòng tìm thấy
+    </div>
+
+    <!-- Price Legend -->
+    <div class="map-legend">
+        <h4>Mức Giá</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #9b59b6;"></div>
+            <span>Rẻ (< 3 triệu)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #f1c40f;"></div>
+            <span>Trung bình (3-5 triệu)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #e74c3c;"></div>
+            <span>Khá cao (5-10 triệu)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #ecf0f1; border: 2px solid #95a5a6;"></div>
+            <span>Cao (> 10 triệu)</span>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Home Button -->
+<a href="/" style="
+    position: fixed;
+    top: 20px;
+    right: 380px;
+    background: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #667eea;
+    font-weight: 600;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+" onmouseover="this.style.background='#667eea'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#667eea';">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Về Trang Chủ
+</a>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script>
+    // Initialize map centered on Vietnam (Hanoi)
+    const map = L.map('map').setView([21.0285, 105.8542], 13);
+
+    // Add Google Maps tiles (best Vietnamese support, cleaner appearance)
+    L.tileLayer('https://mt{s}.google.com/vt/lyrs=r&hl=vi&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        attribution: '© Google Maps',
+        maxZoom: 20
+    }).addTo(map);
+
+    // Marker cluster group
+    const markersCluster = L.markerClusterGroup({
+        chunkedLoading: true,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: true,
+        zoomToBoundsOnClick: true
+    });
+
+    // POI layer group
+    const poiLayer = L.layerGroup().addTo(map);
+
+    // Search circle
+    let searchCircle = null;
+    let searchCenter = null;
+
+    // Price range for color coding
+    const minPrice = {{ min_price }};
+    const maxPrice = {{ max_price }};
+
+    // Get marker color based on price (in millions VND)
+    function getMarkerColor(price) {
+        if (price < 3) return '#9b59b6'; // Purple - 1-3 triệu
+        if (price < 5) return '#f1c40f'; // Yellow - 3-5 triệu
+        if (price < 10) return '#e74c3c'; // Red - 5-10 triệu
+        return '#ecf0f1'; // White/Light gray - >= 10 triệu
+    }
+
+    // Create custom marker icon
+    function createMarkerIcon(color) {
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `
+                <div style="
+                    background-color: ${color};
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50% 50% 50% 0;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <i class="fas fa-home" style="
+                        transform: rotate(45deg);
+                        color: white;
+                        font-size: 12px;
+                    "></i>
+                </div>
+            `,
+            iconSize: [30, 30],
+            iconAnchor: [15, 30],
+            popupAnchor: [0, -30]
+        });
+    }
+
+    // Create popup content
+    function createPopupContent(properties) {
+        const features = properties.features && properties.features.length > 0
+            ? properties.features.map(f => `<span class="feature-badge">${f}</span>`).join('')
+            : '';
+
+        const image = properties.image
+            ? `<img src="${properties.image}" alt="${properties.title}" class="popup-image">`
+            : '';
+
+        return `
+            <div class="popup-content">
+                ${image}
+                <div class="popup-body">
+                    <h3 class="popup-title">${properties.title}</h3>
+                    <div class="popup-price">${properties.price_formatted}</div>
+                    <div class="popup-info">
+                        <div><i class="fas fa-expand-arrows-alt"></i> ${properties.area} m²</div>
+                        <div><i class="fas fa-map-marker-alt"></i> ${properties.ward}, ${properties.district}</div>
+                        <div><i class="fas fa-tag"></i> ${properties.category}</div>
+                        ${properties.phone ? `<div><i class="fas fa-phone"></i> ${properties.phone}</div>` : ''}
+                    </div>
+                    ${features ? `<div class="popup-features">${features}</div>` : ''}
+                    <div class="popup-actions">
+                        <a href="${properties.url}" class="popup-btn popup-btn-primary" target="_blank">
+                            <i class="fas fa-eye"></i> Xem Chi Tiết
+                        </a>
+                        <a href="tel:${properties.phone}" class="popup-btn popup-btn-secondary">
+                            <i class="fas fa-phone"></i> ${properties.phone}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Load rental posts data
+    function loadRentalPosts(filters = {}) {
+        showLoading();
+
+        // Build query string
+        const params = new URLSearchParams();
+        if (filters.minPrice) params.append('min_price', filters.minPrice);
+        if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+        if (filters.lat && filters.lng) {
+            params.append('lat', filters.lat);
+            params.append('lng', filters.lng);
+            params.append('radius', filters.radius || 5);
+        }
+        if (filters.category) params.append('category', filters.category);
+
+        fetch(`/api/map/posts/?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                // Clear existing markers
+                markersCluster.clearLayers();
+
+                // Add markers
+                data.features.forEach(feature => {
+                    const coords = feature.geometry.coordinates;
+                    const props = feature.properties;
+                    const color = getMarkerColor(props.price);
+
+                    const marker = L.marker([coords[1], coords[0]], {
+                        icon: createMarkerIcon(color)
+                    });
+
+                    marker.bindPopup(createPopupContent(props), {
+                        maxWidth: 300,
+                        className: 'custom-popup'
+                    });
+
+                    markersCluster.addLayer(marker);
+                });
+
+                map.addLayer(markersCluster);
+
+                // Update counter
+                document.getElementById('resultCount').textContent = data.features.length;
+
+                // Fit bounds if we have results
+                if (data.features.length > 0) {
+                    map.fitBounds(markersCluster.getBounds(), { padding: [50, 50] });
+                }
+
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error loading posts:', error);
+                hideLoading();
+            });
+    }
+
+    // Load POIs
+    function loadPOIs(poiTypes = []) {
+        if (poiTypes.length === 0) {
+            poiLayer.clearLayers();
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('poi_types', poiTypes.join(','));
+
+        if (searchCenter) {
+            params.append('lat', searchCenter.lat);
+            params.append('lng', searchCenter.lng);
+            params.append('radius', document.getElementById('searchRadius').value);
+        }
+
+        fetch(`/api/map/pois/?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                poiLayer.clearLayers();
+
+                data.features.forEach(feature => {
+                    const coords = feature.geometry.coordinates;
+                    const props = feature.properties;
+
+                    const poiIcon = L.divIcon({
+                        className: `poi-marker ${props.poi_type}`,
+                        html: getPOIIcon(props.poi_type),
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+
+                    const marker = L.marker([coords[1], coords[0]], { icon: poiIcon });
+                    marker.bindPopup(`
+                        <div style="min-width: 200px;">
+                            <h4 style="margin: 0 0 10px 0;">${props.name}</h4>
+                            <p style="margin: 5px 0; font-size: 12px;">
+                                <strong>${props.poi_type_display}</strong>
+                            </p>
+                            ${props.address ? `<p style="margin: 5px 0; font-size: 12px;">${props.address}</p>` : ''}
+                            ${props.phone ? `<p style="margin: 5px 0; font-size: 12px;"><i class="fas fa-phone"></i> ${props.phone}</p>` : ''}
+                        </div>
+                    `);
+
+                    poiLayer.addLayer(marker);
+                });
+            })
+            .catch(error => console.error('Error loading POIs:', error));
+    }
+
+    // Get POI icon
+    function getPOIIcon(poiType) {
+        const icons = {
+            school: '<i class="fas fa-graduation-cap"></i>',
+            hospital: '<i class="fas fa-hospital"></i>',
+            supermarket: '<i class="fas fa-shopping-cart"></i>',
+            bus_station: '<i class="fas fa-bus"></i>',
+            train_station: '<i class="fas fa-train"></i>',
+            metro_station: '<i class="fas fa-subway"></i>',
+            market: '<i class="fas fa-store"></i>',
+            park: '<i class="fas fa-tree"></i>',
+            mall: '<i class="fas fa-shopping-bag"></i>',
+            bank: '<i class="fas fa-university"></i>',
+            atm: '<i class="fas fa-credit-card"></i>',
+            pharmacy: '<i class="fas fa-pills"></i>',
+            restaurant: '<i class="fas fa-utensils"></i>',
+            cafe: '<i class="fas fa-coffee"></i>',
+            gym: '<i class="fas fa-dumbbell"></i>'
+        };
+        return icons[poiType] || '<i class="fas fa-map-marker"></i>';
+    }
+
+    // Show/hide loading
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.remove('active');
+    }
+
+    // Apply filters
+    document.getElementById('applyFilters').addEventListener('click', function() {
+        const filters = {
+            minPrice: document.getElementById('minPrice').value,
+            maxPrice: document.getElementById('maxPrice').value,
+            category: document.getElementById('categoryFilter').value,
+            radius: document.getElementById('searchRadius').value
+        };
+
+        if (searchCenter) {
+            filters.lat = searchCenter.lat;
+            filters.lng = searchCenter.lng;
+        }
+
+        loadRentalPosts(filters);
+
+        // Load POIs
+        const selectedPOIs = Array.from(document.querySelectorAll('input[name="poi_types"]:checked'))
+            .map(cb => cb.value);
+        loadPOIs(selectedPOIs);
+    });
+
+    // Reset filters
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('minPrice').value = '';
+        document.getElementById('maxPrice').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('searchRadius').value = 5;
+        document.getElementById('radiusValue').textContent = '5 km';
+        document.querySelectorAll('input[name="poi_types"]').forEach(cb => cb.checked = false);
+
+        if (searchCircle) {
+            map.removeLayer(searchCircle);
+            searchCircle = null;
+        }
+        searchCenter = null;
+
+        loadRentalPosts();
+        poiLayer.clearLayers();
+    });
+
+    // Update radius value display
+    document.getElementById('searchRadius').addEventListener('input', function() {
+        document.getElementById('radiusValue').textContent = this.value + ' km';
+
+        if (searchCircle && searchCenter) {
+            map.removeLayer(searchCircle);
+            searchCircle = L.circle(searchCenter, {
+                radius: this.value * 1000,
+                color: '#667eea',
+                fillColor: '#667eea',
+                fillOpacity: 0.1,
+                weight: 2
+            }).addTo(map);
+        }
+    });
+
+    // Use my location
+    document.getElementById('useMyLocation').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            showLoading();
+            navigator.geolocation.getCurrentPosition(function(position) {
+                searchCenter = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                const radius = parseFloat(document.getElementById('searchRadius').value);
+
+                if (searchCircle) map.removeLayer(searchCircle);
+                searchCircle = L.circle(searchCenter, {
+                    radius: radius * 1000,
+                    color: '#667eea',
+                    fillColor: '#667eea',
+                    fillOpacity: 0.1,
+                    weight: 2
+                }).addTo(map);
+
+                map.setView(searchCenter, 14);
+                hideLoading();
+
+                // Auto apply filters
+                document.getElementById('applyFilters').click();
+            }, function() {
+                alert('Không thể lấy vị trí của bạn');
+                hideLoading();
+            });
+        } else {
+            alert('Trình duyệt không hỗ trợ định vị');
+        }
+    });
+
+    // Toggle sidebar
+    document.getElementById('toggleSidebar').addEventListener('click', function() {
+        const sidebar = document.getElementById('filter-sidebar');
+        const icon = this.querySelector('i');
+
+        sidebar.classList.toggle('collapsed');
+
+        if (sidebar.classList.contains('collapsed')) {
+            icon.classList.remove('fa-chevron-left');
+            icon.classList.add('fa-chevron-right');
+        } else {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-left');
+        }
+    });
+
+    // Click on map to set search center
+    map.on('click', function(e) {
+        searchCenter = e.latlng;
+        const radius = parseFloat(document.getElementById('searchRadius').value);
+
+        if (searchCircle) map.removeLayer(searchCircle);
+        searchCircle = L.circle(searchCenter, {
+            radius: radius * 1000,
+            color: '#667eea',
+            fillColor: '#667eea',
+            fillOpacity: 0.1,
+            weight: 2
+        }).addTo(map);
+    });
+
+    // Initial load
+    loadRentalPosts();
+</script>
+
+</body>
+</html>

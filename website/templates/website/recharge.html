@@ -1,0 +1,117 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block main-content %}
+<link rel="stylesheet" href="{% static 'css/recharge.css' %}">
+
+<div class="recharge-container container">
+    <section class="recharge-hero">
+        <h1>💳 Nạp tiền vào ví</h1>
+        <p>Nạp tiền để sử dụng các dịch vụ của chúng tôi</p>
+    </section>
+
+    <section class="recharge-card">
+        <form method="post" class="recharge-form">
+            {% csrf_token %}
+
+            <div class="grid-2">
+                <!-- Số tiền nạp -->
+                <div class="form-field">
+                    <label>{{ form.amount.label }}</label>
+                    <div class="input-wrap">
+                        {{ form.amount }}
+                        <span class="suffix">VNĐ</span>
+                    </div>
+                    {% if form.amount.help_text %}
+                    <div class="hint">{{ form.amount.help_text }}</div>
+                    {% endif %}
+                    {% if form.amount.errors %}
+                    <div class="error">{{ form.amount.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div class="form-field">
+                    <label>{{ form.payment_method.label }}</label>
+                    {{ form.payment_method }}
+                    {% if form.payment_method.errors %}
+                    <div class="error">{{ form.payment_method.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Ghi chú -->
+            <div class="form-field">
+                <label>{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.help_text %}
+                <div class="hint">{{ form.description.help_text }}</div>
+                {% endif %}
+                {% if form.description.errors %}
+                <div class="error">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn-primary">💳 Tạo yêu cầu nạp tiền</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="info-card">
+        <h3>ℹ️ Hướng dẫn nạp tiền</h3>
+        <ul>
+            <li>Sau khi tạo yêu cầu nạp tiền, bạn sẽ nhận được mã giao dịch</li>
+            <li>Thực hiện chuyển khoản theo thông tin được cung cấp</li>
+            <li>Admin sẽ xác nhận và cộng tiền vào ví của bạn</li>
+            <li>Thời gian xử lý: 1-24 giờ làm việc</li>
+            <li> Lưu ý : tiền đã nạp thì không thể rút được </li>
+        </ul>
+    </section>
+
+    <section class="suggested-amounts">
+        <h3>💰 Gói nạp tiền đề xuất</h3>
+        <div class="amount-grid">
+            <button type="button" class="btn-amount" data-value="100000"><span>100K</span><small>VNĐ</small></button>
+            <button type="button" class="btn-amount" data-value="500000"><span>500K</span><small>VNĐ</small></button>
+            <button type="button" class="btn-amount" data-value="1000000"><span>1M</span><small>VNĐ</small></button>
+            <button type="button" class="btn-amount" data-value="2000000"><span>2M</span><small>VNĐ</small></button>
+        </div>
+    </section>
+</div>
+
+<script>
+// Gắn style cho input/select/textarea mặc định của Django form
+document.addEventListener('DOMContentLoaded', function(){
+    const scope = document.querySelector('.recharge-form');
+    if(!scope) return;
+    scope.querySelectorAll('input, select, textarea').forEach(el=>{
+        el.classList.add('control');
+    });
+
+    // Chọn nhanh số tiền
+    document.querySelectorAll('.btn-amount').forEach(btn=>{
+        btn.addEventListener('click', function(){
+            const val = this.getAttribute('data-value');
+            const input = document.getElementById('id_amount');
+            if(input){ input.value = val; }
+            document.querySelectorAll('.btn-amount').forEach(b=>b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+
+function submitMoMo(){
+    var val = document.getElementById('id_amount').value || '';
+    if(!val || parseInt(val) < 10000){
+            alert('Vui lòng nhập số tiền hợp lệ (tối thiểu 10,000 VNĐ).');
+            return;
+    }
+    var hidden = document.getElementById('momo_amount');
+    if(hidden){ hidden.value = val; }
+    var form = document.getElementById('momoForm');
+    if(form){ form.submit(); }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,208 @@
+{% extends 'website/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block main-content %}
+<div style="min-height: 100vh; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding: 48px 48px 80px;">
+    <div style="max-width: 900px; margin: 0 auto;">
+        <!-- Back Button -->
+        <div style="margin-bottom: 24px;">
+            <a href="{% url 'recharge_history' %}" style="display: inline-flex; align-items: center; gap: 8px; color: #1e40af; text-decoration: none; font-weight: 600; transition: all 0.2s ease;">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12 4l-8 6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Quay lại Lịch sử nạp tiền
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px; border-radius: 20px 20px 0 0; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 50%; height: 100%; opacity: 0.1;">
+                <svg width="100%" height="100%" viewBox="0 0 100 100">
+                    <circle cx="80" cy="20" r="30" fill="white"/>
+                    <circle cx="60" cy="70" r="20" fill="white"/>
+                </svg>
+            </div>
+            <div style="position: relative; z-index: 1;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255, 255, 255, 0.2); border-radius: 20px; margin-bottom: 16px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z" fill="white"/>
+                        <circle cx="8" cy="8" r="3" fill="white"/>
+                    </svg>
+                    <span style="color: white; font-size: 13px; font-weight: 600;">Chi tiết giao dịch</span>
+                </div>
+                <h1 style="color: white; font-size: 32px; font-weight: 800; margin: 0 0 8px 0;">{{ transaction.get_payment_method_display }}</h1>
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 15px; margin: 0;">Mã giao dịch: <span style="font-family: monospace; font-weight: 600;">{{ transaction.transaction_id }}</span></p>
+            </div>
+        </div>
+
+        <!-- Status & Amount -->
+        <div style="background: white; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="color: #6b7280; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Trạng thái</div>
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: {% if transaction.status == 'completed' %}#dcfce7{% elif transaction.status == 'pending' %}#fef3c7{% else %}#fee2e2{% endif %};">
+                    {% if transaction.status == 'completed' %}
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="#16a34a" stroke-width="1.5"/>
+                        <path d="M7 10l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {% elif transaction.status == 'pending' %}
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="#f59e0b" stroke-width="1.5"/>
+                        <path d="M10 5v5l3 2" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    {% else %}
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="#dc2626" stroke-width="1.5"/>
+                        <path d="M13 7l-6 6M7 7l6 6" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    {% endif %}
+                    <span style="font-size: 16px; font-weight: 700; color: {% if transaction.status == 'completed' %}#166534{% elif transaction.status == 'pending' %}#92400e{% else %}#991b1b{% endif %};">
+                        {{ transaction.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: #6b7280; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Số tiền</div>
+                <div style="font-size: 36px; font-weight: 800; color: {% if transaction.amount >= 0 %}#16a34a{% else %}#dc2626{% endif %};">
+                    {{ transaction.amount|intcomma }} ₫
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Details -->
+        <div style="background: white; padding: 40px; border-radius: 0 0 20px 20px;">
+            <h2 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0 0 24px 0;">Thông tin chi tiết</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <!-- Left Column -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Transaction ID -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Mã giao dịch</div>
+                        <div style="font-family: monospace; background: #f3f4f6; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1f2937; word-break: break-all;">
+                            {{ transaction.transaction_id }}
+                        </div>
+                    </div>
+
+                    {% if transaction.momo_order_id %}
+                    <!-- MoMo Order ID -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">MoMo Order ID</div>
+                        <div style="font-family: monospace; background: #f3f4f6; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1f2937; word-break: break-all;">
+                            {{ transaction.momo_order_id }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Payment Method -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Phương thức thanh toán</div>
+                        <div style="background: #f3f4f6; padding: 12px 16px; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1f2937;">
+                            {{ transaction.get_payment_method_display }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Created At -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ngày tạo</div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #f3f4f6; padding: 12px 16px; border-radius: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <rect x="2" y="3" width="14" height="13" rx="2" stroke="#6b7280" stroke-width="1.5"/>
+                                <path d="M2 7h14M6 1v4M12 1v4" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <span style="font-size: 15px; font-weight: 600; color: #1f2937;">{{ transaction.created_at|date:"d/m/Y H:i:s" }}</span>
+                        </div>
+                    </div>
+
+                    {% if transaction.completed_at %}
+                    <!-- Completed At -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ngày hoàn thành</div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #dcfce7; padding: 12px 16px; border-radius: 8px; border: 1px solid #bbf7d0;">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <circle cx="9" cy="9" r="7" stroke="#16a34a" stroke-width="1.5"/>
+                                <path d="M6 9l2 2 4-4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span style="font-size: 15px; font-weight: 600; color: #166534;">{{ transaction.completed_at|date:"d/m/Y H:i:s" }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Amount -->
+                    <div>
+                        <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Số tiền giao dịch</div>
+                        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 12px 16px; border-radius: 8px; font-size: 18px; font-weight: 800; color: #166534; border: 2px solid #86efac;">
+                            +{{ transaction.amount|intcomma }} VNĐ
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if transaction.description %}
+            <!-- Description -->
+            <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #e5e7eb;">
+                <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ghi chú</div>
+                <div style="background: #f9fafb; padding: 16px 20px; border-radius: 12px; border-left: 4px solid #3b82f6; font-size: 15px; color: #374151; line-height: 1.6;">
+                    {{ transaction.description }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if transaction.admin_note %}
+            <!-- Admin Note -->
+            <div style="margin-top: 24px;">
+                <div style="color: #6b7280; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ghi chú từ quản trị viên</div>
+                <div style="background: #fef3c7; padding: 16px 20px; border-radius: 12px; border-left: 4px solid #f59e0b; font-size: 15px; color: #92400e; line-height: 1.6;">
+                    {{ transaction.admin_note }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: center;">
+            <a href="{% url 'recharge_history' %}" style="padding: 14px 32px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12 4l-8 6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Quay lại danh sách
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .print-section, .print-section * {
+            visibility: visible;
+        }
+        .print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    }
+
+    a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+    }
+
+    button:hover {
+        background: #1e40af !important;
+        color: white !important;
+        transform: translateY(-2px);
+    }
+
+    details summary:hover {
+        color: #3b82f6;
+    }
+</style>
+{% endblock %}

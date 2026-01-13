@@ -1,0 +1,7 @@
+# Requirements cho hệ thống gợi ý AI
+
+# Machine Learning
+numpy>=1.21.0
+scikit-learn>=1.0.0
+
+# Django đã có sẵn, không cần cài lại

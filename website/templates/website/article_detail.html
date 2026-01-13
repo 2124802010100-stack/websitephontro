@@ -1,0 +1,124 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% block main-content %}
+
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/article.css' %}">
+
+<main class="article-layout container" role="main">
+  <div class="article-main">
+    <article class="article-card">
+      {% if article.banner %}
+      <figure class="article-hero">
+        <img src="{{ article.banner.url }}" alt="{{ article.title }}" />
+      </figure>
+      {% endif %}
+
+      <header class="article-header">
+        <h1 class="article-title">{{ article.title }}</h1>
+        <div class="article-meta">
+          <span>{{ article.published_at|timesince }} trước</span>
+          {% if article.excerpt %}
+          <span class="dot">•</span>
+          <span class="article-reading-estimate" id="readingTime"></span>
+          {% endif %}
+        </div>
+        {% if article.excerpt %}
+          <p class="article-excerpt">{{ article.excerpt }}</p>
+        {% endif %}
+      </header>
+
+      <div class="article-body typography" id="articleBody">
+        {{ article.content|safe }}
+      </div>
+
+      <footer class="article-footer">
+        <div class="share-row">
+          <span>Chia sẻ:</span>
+          <button type="button" class="share-btn" data-share="copy" onclick="copyArticleLink()">Sao chép link</button>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}">Facebook</a>
+        </div>
+      </footer>
+    </article>
+  </div>
+
+  <aside class="article-sidebar">
+    <section class="sidebar-block">
+      <h3 class="sidebar-title">Tin mới đăng</h3>
+      <div class="sidebar-list">
+        {% for recent_post in recent_posts %}
+        <a href="{% url 'post_detail' recent_post.id %}" class="recent-post" aria-label="{{ recent_post.title }}">
+          {% with recent_post.images.first as thumb %}
+            {% if thumb %}
+              <img src="{{ thumb.image.url }}" alt="{{ recent_post.title }}" />
+            {% endif %}
+          {% endwith %}
+          <div class="recent-post-content">
+            <div class="recent-post-title">{{ recent_post.title|truncatechars:60 }}</div>
+            <div class="recent-post-price">{{ recent_post.price|floatformat:0 }} triệu/tháng</div>
+            <div class="recent-post-time">{{ recent_post.created_at|timesince }} trước</div>
+          </div>
+        </a>
+        {% empty %}
+        <p class="empty">Chưa có tin mới.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="sidebar-block">
+      <h3 class="sidebar-title">Bài viết mới</h3>
+      <div class="sidebar-list">
+        {% for a in latest_articles %}
+        <a href="{% url 'article_detail' a.slug %}" class="recent-post" aria-label="{{ a.title }}">
+          {% if a.banner %}
+            <img src="{{ a.banner.url }}" alt="{{ a.title }}" />
+          {% endif %}
+          <div class="recent-post-content">
+            <div class="recent-post-title">{{ a.title|truncatechars:60 }}</div>
+            <div class="recent-post-time">{{ a.published_at|timesince }} trước</div>
+          </div>
+        </a>
+        {% empty %}
+        <p class="empty">Chưa có bài viết.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="sidebar-block">
+      <h3 class="sidebar-title">Có thể bạn quan tâm</h3>
+      <ul class="link-list">
+        {% for link in suggested_links %}
+        <li>
+          <a href="{{ link.url }}" target="_blank" rel="noopener" class="ext-link">
+            <span class="chevron">›</span>{{ link.title }}
+          </a>
+        </li>
+        {% empty %}
+        <li class="empty">Đang cập nhật.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </aside>
+</main>
+
+<script>
+// Ước tính thời gian đọc (200 từ/phút)
+document.addEventListener('DOMContentLoaded', function(){
+  var bodyEl = document.getElementById('articleBody');
+  if(!bodyEl) return;
+  var text = bodyEl.innerText || bodyEl.textContent || '';
+  var words = text.trim().split(/\s+/).filter(Boolean);
+  var minutes = Math.max(1, Math.round(words.length / 200));
+  var target = document.getElementById('readingTime');
+  if(target){ target.textContent = minutes + ' phút đọc'; }
+});
+function copyArticleLink(){
+  navigator.clipboard.writeText(window.location.href).then(()=>{
+    alert('Đã sao chép đường dẫn bài viết.');
+  });
+}
+</script>
+
+{% endblock %}
+
+

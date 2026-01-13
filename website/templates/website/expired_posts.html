@@ -1,0 +1,250 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load vip_tags %}
+
+{% block extra_head %}
+<style>
+    /* Make manage rooms page use full width */
+    .main-content { max-width: 100%; margin: 0; padding: 0; }
+
+    .text-danger { color: #ef4444; }
+    .text-success { color: #10b981; }
+    .text-muted { color: #6b7280; }
+
+    .expired-alert {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .expired-post-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .expired-post-header {
+        display: flex;
+        justify-content: between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .expired-post-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .expired-post-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .expired-badge {
+        background: #ef4444;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .renewal-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .btn-renew {
+        background: #10b981;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .btn-renew:hover {
+        background: #059669;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block main-content %}
+<link rel="stylesheet" href="{% static 'css/mange_rooms.css' %}">
+<div class="header">
+    <div class="container">
+        <h1><i class="fas fa-clock"></i> Bài đăng hết hạn</h1>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="user-profile">
+                <p>
+                    <strong>Xin chào {{ request.user|display_name }}</strong><br>
+                    {{ request.user.username }}
+                </p>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <ul class="menu-list">
+                <li>
+                    <a href="{% url 'post_create' %}">
+                        <i class="fas fa-plus-circle"></i> Đăng tin mới
+                    </a>
+                </li>
+                <li><a href="{% url 'manage_rooms' %}"><i class="fas fa-list"></i> Danh sách tin đăng</a></li>
+                <li><a href="{% url 'rental_management' %}"><i class="fas fa-handshake"></i> Quản lý thuê</a></li>
+                <li><a href="#" class="active"><i class="fas fa-clock"></i> Bài đăng hết hạn</a></li>
+                <li><a href="{% url 'recharge' %}"><i class="fas fa-credit-card"></i> Nạp tiền vào tài khoản</a></li>
+                <li><a href="{% url 'recharge_history' %}"><i class="fas fa-history"></i> Lịch sử nạp tiền</a></li>
+                <li><a href="{% url 'bang_gia_dich_vu' %}"><i class="fas fa-tags"></i> Bảng giá dịch vụ</a></li>
+                <li><a href="{% url 'account_settings' %}"><i class="fas fa-user-cog"></i> Quản lý tài khoản</a></li>
+                <li><a href="{% url 'deletion_logs' %}"><i class="fas fa-history"></i> Nhật ký xóa</a></li>
+                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Content Header -->
+        <div class="content-header">
+            <h2 class="content-title">Bài đăng hết hạn ({{ total_expired }} bài)</h2>
+            <a href="{% url 'post_create' %}" class="btn-add">
+                <i class="fas fa-plus"></i> Đăng tin mới
+            </a>
+        </div>
+
+        {% if total_expired > 0 %}
+        <div class="expired-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Thông báo:</strong> Bạn có {{ total_expired }} bài đăng đã hết hạn.
+            {% if current_vip %}
+                Bạn có thể chọn bài đăng để gia hạn theo gói VIP hiện tại.
+            {% else %}
+                Để gia hạn bài đăng, vui lòng <a href="{% url 'bang_gia_dich_vu' %}" style="color: #991b1b; text-decoration: underline;">đăng ký gói VIP</a>.
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if current_vip %}
+        <div class="alert alert-info" style="background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-gem"></i>
+            <strong>VIP hiện tại:</strong> {{ current_vip.get_plan_display }} - Hết hạn: {{ current_vip.expires_at|date:"d/m/Y H:i" }}<br>
+            <small>Cho phép gia hạn: {{ current_vip.posts_per_day }} bài/lần • Thời gian gia hạn: {{ current_vip.post_expire_days }} ngày</small>
+        </div>
+
+        {% if total_expired > 0 %}
+        <div style="text-align: center; margin-bottom: 24px;">
+            <a href="{% url 'select_posts_to_renew' %}" class="btn-renew" style="background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-tasks"></i> Chọn bài đăng để gia hạn
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if expired_posts %}
+            {% for post in expired_posts %}
+            <div class="expired-post-card">
+                <div class="expired-post-header">
+                    <div style="flex: 1;">
+                        <div class="expired-post-title">
+                            <a href="{% url 'post_detail' post.id %}" style="color: {% vip_style_color post.user %}; text-decoration: none;">
+                                {{ post.title }}
+                            </a>
+                        </div>
+                        <div class="expired-post-meta">
+                            <span><i class="fas fa-map-marker-alt"></i>
+                                {% if post.district %}{{ post.district.name }}{% elif post.province %}{{ post.province.name }}{% else %}Chưa cập nhật{% endif %}
+                            </span>
+                            <span><i class="fas fa-tag"></i> {{ post.price|floatformat:0 }}đ/tháng</span>
+                            <span><i class="fas fa-expand-arrows-alt"></i> {{ post.area }}m²</span>
+                        </div>
+                        <div class="expired-post-meta">
+                            <span><i class="fas fa-calendar-plus"></i> <strong>Ngày đăng:</strong> {{ post.created_at|date:"d/m/Y H:i" }}</span>
+                            <span><i class="fas fa-calendar-times"></i> <strong>Hết hạn:</strong> {{ post.expired_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="expired-badge">Hết hạn</span>
+                    </div>
+                </div>
+
+                {% if post.images.all %}
+                <div style="margin-bottom: 12px;">
+                    <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}"
+                         style="width: 120px; height: 80px; object-fit: cover; border-radius: 6px;">
+                </div>
+                {% endif %}
+
+                <div class="renewal-actions">
+                    <a href="{% url 'post_detail' post.id %}" class="btn-secondary">
+                        <i class="fas fa-eye"></i> Xem chi tiết
+                    </a>
+                    <a href="{% url 'edit_room' post.id %}" class="btn-secondary">
+                        <i class="fas fa-edit"></i> Chỉnh sửa
+                    </a>
+                    {% if not current_vip %}
+                    <a href="{% url 'bang_gia_dich_vu' %}" class="btn-renew">
+                        <i class="fas fa-gem"></i> Đăng ký VIP để gia hạn
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-check-circle" style="color: #10b981;"></i>
+            </div>
+            <h3>Tuyệt vời!</h3>
+            <p>Bạn không có bài đăng nào hết hạn.</p>
+            <a href="{% url 'manage_rooms' %}" class="btn-add">
+                <i class="fas fa-list"></i> Xem tất cả tin đăng
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Có thể thêm JavaScript để xử lý gia hạn tự động nếu cần
+</script>
+{% endblock %}

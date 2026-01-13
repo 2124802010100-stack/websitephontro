@@ -1,0 +1,266 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block main-content %}
+<div class="account-container">
+  <h2 class="page-title">Quản lý tài khoản</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="profile">Thông tin cá nhân</button>
+    <button class="tab-btn" data-tab="password">Đổi mật khẩu</button>
+  </div>
+
+  <!-- Hồ sơ cá nhân -->
+  <div id="tab-profile">
+    <form id="profile-form" method="post">
+      {% csrf_token %}
+      <div class="card">
+        <div class="grid-2">
+          <div>
+            <label>Tên hiển thị</label>
+            <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" class="form-input" placeholder="Tên của bạn sẽ hiển thị trên website">
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" name="email" value="{{ form.email.value|default:'' }}" class="form-input" id="otp-email">
+          </div>
+          <div>
+            <label>Số điện thoại</label>
+            <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" class="form-input">
+          </div>
+          <div>
+            <label>Địa chỉ</label>
+            {{ form.address }}
+          </div>
+        </div>
+
+        <input type="hidden" name="purpose" value="profile_update">
+        <div class="btn-row">
+          <button type="button" id="send-otp" class="btn blue">Gửi OTP</button>
+          <input type="text" name="code" placeholder="Nhập mã OTP" class="form-input otp-input">
+          <button type="submit" class="btn orange">Cập nhật</button>
+        </div>
+
+        {% if otp_error %}<div class="error-msg">{{ otp_error }}</div>{% endif %}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="success-msg">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Đổi mật khẩu -->
+  <div id="tab-password" style="display:none">
+    <div class="card">
+      <form id="pwd-form">
+        {% csrf_token %}
+        <div class="grid-2">
+          <input type="password" name="current_password" placeholder="Mật khẩu hiện tại" class="form-input">
+          <input type="password" name="new_password" placeholder="Mật khẩu mới" class="form-input">
+          <input type="password" name="confirm_password" placeholder="Xác nhận mật khẩu" class="form-input">
+          <input type="text" name="otp" placeholder="OTP (nếu yêu cầu)" class="form-input">
+        </div>
+        <div class="btn-row">
+          <button type="button" id="send-otp-pwd" class="btn blue">Gửi OTP cho đổi mật khẩu</button>
+          <button type="submit" class="btn orange">Đổi mật khẩu</button>
+        </div>
+      </form>
+      <div id="pwd-msg" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STYLE ========== -->
+<style>
+.account-container {
+  max-width: 900px;
+  margin: 40px auto 60px;
+  padding: 0 20px;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 18px;
+  border: 0;
+  background: transparent;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-bottom: 2px solid transparent;
+}
+.tab-btn:hover {
+  color: #f97316;
+}
+.tab-btn.active {
+  color: #f97316;
+  border-bottom: 2px solid #f97316;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+.card:hover {
+  box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: block;
+  color: #374151;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.25s;
+}
+.form-input:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.otp-input {
+  max-width: 180px;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  transition: all 0.25s ease;
+}
+
+.btn.orange {
+  background: linear-gradient(90deg, #f97316, #ea580c);
+}
+.btn.orange:hover {
+  background: linear-gradient(90deg, #ea580c, #c2410c);
+  transform: translateY(-1px);
+}
+
+.btn.blue {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+}
+.btn.blue:hover {
+  background: linear-gradient(90deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+}
+
+.success-msg {
+  margin-top: 8px;
+  color: #16a34a;
+  font-size: 15px;
+}
+.error-msg {
+  color: #dc2626;
+  margin-top: 8px;
+  font-size: 15px;
+}
+</style>
+
+<!-- ========== SCRIPT ========== -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Tab switch
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');
+      const tab = this.dataset.tab;
+      document.getElementById('tab-profile').style.display = tab==='profile' ? '' : 'none';
+      document.getElementById('tab-password').style.display = tab==='password' ? '' : 'none';
+    });
+  });
+
+  // Gửi OTP hồ sơ
+  const sendBtn = document.getElementById('send-otp');
+  sendBtn && sendBtn.addEventListener('click', function(){
+    const email = document.getElementById('otp-email').value;
+    const csrf = document.querySelector('#profile-form [name=csrfmiddlewaretoken]').value;
+    fetch('{% url "send_account_otp" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrf, 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body: new URLSearchParams({email})
+    }).then(r=>r.json()).then(res=>{
+      alert(res.status==='ok' ? 'OTP đã gửi đến email' : (res.message||'Lỗi gửi OTP'));
+    }).catch(()=>alert('Không gửi được OTP'));
+  });
+
+  // Gửi OTP đổi mật khẩu
+  const sendPwdOtpBtn = document.getElementById('send-otp-pwd');
+  sendPwdOtpBtn && sendPwdOtpBtn.addEventListener('click', function(){
+    const email = document.getElementById('otp-email').value;
+    const csrf = document.querySelector('#profile-form [name=csrfmiddlewaretoken]').value;
+    fetch('{% url "send_account_otp" %}', {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrf, 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body: new URLSearchParams({email, purpose:'account_recovery'})
+    }).then(r=>r.json()).then(res=>{
+      alert(res.status==='ok' ? 'OTP đổi mật khẩu đã gửi' : (res.message||'Lỗi gửi OTP'));
+    }).catch(()=>alert('Không gửi được OTP'));
+  });
+
+  // Submit đổi mật khẩu
+  const pwdForm = document.getElementById('pwd-form');
+  pwdForm && pwdForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const formData = new FormData(pwdForm);
+    const csrf = document.querySelector('#pwd-form [name=csrfmiddlewaretoken]').value;
+    fetch('{% url "change_password" %}', {method:'POST', headers:{'X-CSRFToken': csrf}, body:formData})
+      .then(r=>r.json()).then(res=>{
+        const msg = document.getElementById('pwd-msg');
+        if(res.status==='ok'){ msg.textContent='Đổi mật khẩu thành công'; msg.style.color='#16a34a'; }
+        else { msg.textContent=res.message||'Không đổi được mật khẩu'; msg.style.color='#dc2626'; }
+      }).catch(()=>{
+        const msg = document.getElementById('pwd-msg');
+        msg.textContent='Lỗi hệ thống'; msg.style.color='#dc2626';
+      });
+  });
+});
+</script>
+{% endblock %}

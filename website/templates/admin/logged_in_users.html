@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="lu-wrapper">
+  <div class="lu-card lu-header">
+    <div class="lu-title">
+      <span class="lu-icon">👤</span>
+      <h1>{% trans 'Người dùng đang đăng nhập' %}</h1>
+    </div>
+    <div class="lu-toolbar">
+      <input id="lu-search" type="text" placeholder="Tìm theo username hoặc email..." />
+      <span class="lu-meta">Hiển thị <strong id="lu-visible-count">{{ user_rows|length }}</strong> người dùng ({{ total_sessions }} phiên)</span>
+    </div>
+  </div>
+
+  <div class="lu-card">
+    <div class="lu-table-wrap">
+      <table id="lu-table" class="lu-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th style="width:110px; text-align:center;">Số phiên</th>
+            <th style="width:180px;">Đăng nhập lần cuối</th>
+            <th style="min-width:260px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in user_rows %}
+          <tr>
+            <td data-col="username">{{ row.user.username }}</td>
+            <td data-col="email"><a href="mailto:{{ row.user.email }}">{{ row.user.email }}</a></td>
+            <td style="text-align:center;"><span class="lu-badge">{{ row.session_count }}</span></td>
+            <td style="font-size:13px; color:#6b7280;">
+              {% if row.last_login %}
+                {{ row.last_login|timesince }} trước
+              {% else %}
+                <em>Chưa rõ</em>
+              {% endif %}
+            </td>
+            <td>
+              <div class="lu-session-actions">
+                {% for s in row.sessions %}
+                <form action="/admin/revoke-session/{{ s.session_key }}/" method="post">
+                  {% csrf_token %}
+                  <button class="lu-btn lu-btn-danger" type="submit" title="Hủy phiên này" onclick="return confirm('Hủy đăng nhập phiên này?');">
+                    Hủy phiên
+                  </button>
+                </form>
+                {% endfor %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="text-align:center; color:#888;">Không có ai đang đăng nhập.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .lu-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 12px; }
+  .lu-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 16px 20px; margin-bottom: 20px; }
+  .lu-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .lu-title { display: flex; align-items: center; gap: 12px; }
+  .lu-title h1 { margin: 0; font-size: 22px; }
+  .lu-icon { font-size: 24px; }
+  .lu-toolbar { display: flex; align-items: center; gap: 12px; }
+  #lu-search { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; min-width: 260px; }
+  .lu-meta { color: #6b7280; font-size: 14px; }
+
+  .lu-table-wrap { overflow-x: auto; }
+  .lu-table { width: 100%; border-collapse: collapse; }
+  .lu-table thead th { position: sticky; top: 0; background: #f9fafb; z-index: 1; text-align: left; padding: 10px 12px; font-weight: 600; color:#374151; border-bottom: 1px solid #e5e7eb; }
+  .lu-table tbody td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .lu-table tbody tr:hover { background: #fafafa; }
+  .lu-badge { display: inline-block; min-width: 28px; padding: 3px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 600; }
+
+  .lu-session-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lu-session-actions form { display: inline-block; }
+  .lu-btn { padding: 6px 10px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; background:#f3f4f6; color:#111827; transition: all .15s ease; font-size: 13px; }
+  .lu-btn:hover { background:#e5e7eb; }
+  .lu-btn-danger { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+  .lu-btn-danger:hover { background:#fecaca; }
+
+  @media (max-width: 720px) {
+    .lu-toolbar { width: 100%; justify-content: space-between; }
+    #lu-search { flex: 1; min-width: 0; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('lu-search');
+    const table = document.getElementById('lu-table');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const countEl = document.getElementById('lu-visible-count');
+
+    function applyFilter() {
+      const q = (input.value || '').toLowerCase().trim();
+      let visible = 0;
+      rows.forEach(tr => {
+        const username = (tr.querySelector('[data-col="username"]').textContent || '').toLowerCase();
+        const email = (tr.querySelector('[data-col="email"]').textContent || '').toLowerCase();
+        const match = !q || username.includes(q) || email.includes(q);
+        tr.style.display = match ? '' : 'none';
+        if (match) visible += 1;
+      });
+      countEl.textContent = visible;
+    }
+
+    input.addEventListener('input', applyFilter);
+  });
+</script>
+{% endblock %}
+
+
+

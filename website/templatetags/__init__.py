@@ -1,0 +1,27 @@
+# Required to make 'templatetags' a Python package for Django to discover custom tags
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

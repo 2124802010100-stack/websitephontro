@@ -1,0 +1,183 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block main-content %}
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Bảng giá dịch vụ VIP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/banggia.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+    <main class="container">
+        <header class="hero">
+            <h1>Bảng giá dịch vụ VIP</h1>
+            <p class="subtitle">Áp dụng từ 31/05/2024</p>
+        </header>
+
+        <section class="pricing-table">
+            {% for pkg in packages %}
+            <div class="plan {% if pkg.plan == 'vip1' %}highlighted{% endif %}">
+                <div class="plan-head {{ pkg.title_color }}">
+                    <h3>{{ pkg.name }}</h3>
+                    <div class="stars">
+                        {% for i in "x"|rjust:pkg.stars %}
+                        <i class="fa-solid fa-star"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+                <ul class="plan-body">
+                    <li class="row"><span class="label">Số tin đăng mỗi ngày</span><span class="value">{{ pkg.posts_per_day }} tin/ngày</span></li>
+                    <li class="row"><span class="label">Thời gian hết hạn</span><span class="value">{{ pkg.get_expire_text }}</span></li>
+                    <li class="row"><span class="label">Màu tiêu đề</span><span class="value highlight-text {{ pkg.title_color }}-text">
+                        {% if pkg.title_color == 'red' %}MÀU ĐỎ{% elif pkg.title_color == 'blue' %}MÀU XANH{% elif pkg.title_color == 'pink' %}MÀU HỒNG{% endif %}
+                    </span></li>
+                    <li class="row"><span class="label">Giá gói</span><span class="value big">{{ pkg.price|floatformat:0|intcomma }}₫</span></li>
+                    <li class="row btn-row">
+                        {% if request.user.is_authenticated and request.user.customerprofile.role == 'owner' %}
+                            <form method="post" action="{% url 'subscribe_vip' %}" class="vip-subscribe-form" data-plan="{{ pkg.plan }}" data-plan-name="{{ pkg.name }}" data-plan-price="{{ pkg.price|floatformat:0 }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="plan" value="{{ pkg.plan }}">
+                                <button type="button" class="demo-btn vip-subscribe-btn">Đăng Kí</button>
+                            </form>
+                        {% else %}
+                            <button type="button" class="demo-btn" onclick="alert('Tài khoản khách chỉ dùng để thuê trọ. Nếu muốn đăng ký gói dịch vụ, vui lòng đăng ký tài khoản chủ cho thuê.')">Đăng Kí</button>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+    <!-- Modal xác nhận đổi gói VIP -->
+    <div id="vipChangeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; max-width:480px; width:90%; padding:0; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <!-- Header với thông tin VIP hiện tại -->
+            <div id="currentVipInfo" style="background:#f0f9ff; border-bottom:1px solid #e0f2fe; padding:16px 20px; border-radius:16px 16px 0 0; display:flex; align-items:center; gap:12px;">
+                <span id="vipBadge" style="width:12px; height:12px; border-radius:50%; background:#3b82f6;"></span>
+                <div style="font-size:14px; color:#334155;">
+                    <strong>VIP hiện tại:</strong> <span id="currentVipName"></span> • Hết hạn: <span id="currentVipExpiry"></span> (<span id="currentVipRemaining"></span>)
+                </div>
+            </div>
+
+            <!-- Nội dung -->
+            <div style="padding:24px 20px;">
+                <h2 style="margin:0 0 16px 0; font-size:22px; color:#1e293b;">Xác nhận đổi gói VIP</h2>
+                <p style="margin:0 0 12px 0; color:#475569; line-height:1.6;">
+                    Bạn đang chọn đăng ký <strong id="newPlanName"></strong> với giá <strong id="newPlanPrice"></strong>đ.
+                </p>
+                <p style="margin:0 0 12px 0; color:#475569; line-height:1.6;">
+                    Số dư ví hiện tại: <strong id="walletBalance"></strong>đ.
+                </p>
+                <p style="margin:0 0 24px 0; color:#dc2626; line-height:1.6; font-weight:500;">
+                    Nếu tiếp tục, gói hiện tại sẽ kết thúc ngay và kích hoạt gói mới.
+                </p>
+
+                <!-- Buttons -->
+                <div style="display:flex; gap:12px;">
+                    <button id="confirmChangeBtn" type="button" style="flex:1; background:#ef4444; color:#fff; border:0; border-radius:10px; padding:12px 20px; cursor:pointer; font-weight:600; font-size:15px; transition:all 0.2s;">
+                        OK, đổi gói
+                    </button>
+                    <button id="cancelChangeBtn" type="button" style="flex:1; background:#f1f5f9; color:#475569; border:0; border-radius:10px; padding:12px 20px; cursor:pointer; font-weight:600; font-size:15px; transition:all 0.2s;">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('vipChangeModal');
+            const confirmBtn = document.getElementById('confirmChangeBtn');
+            const cancelBtn = document.getElementById('cancelChangeBtn');
+            let currentForm = null;
+
+            // Xử lý click nút Đăng Ký
+            document.querySelectorAll('.vip-subscribe-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    currentForm = form;
+                    const plan = form.dataset.plan;
+                    const planName = form.dataset.planName;
+                    const planPrice = form.dataset.planPrice;
+
+                    // Kiểm tra xem user có VIP hiện tại không
+                    try {
+                        const response = await fetch('{% url "subscribe_vip" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'X-Check-VIP': 'true'
+                            },
+                            body: new URLSearchParams(new FormData(form))
+                        });
+
+                        const data = await response.json();
+
+                        if (data.has_active_vip) {
+                            // Hiển thị modal xác nhận
+                            document.getElementById('currentVipName').textContent = data.current_vip.name;
+                            document.getElementById('currentVipExpiry').textContent = data.current_vip.expires_at;
+                            document.getElementById('currentVipRemaining').textContent = data.current_vip.remaining;
+                            document.getElementById('newPlanName').textContent = planName;
+                            document.getElementById('newPlanPrice').textContent = parseInt(planPrice).toLocaleString();
+                            document.getElementById('walletBalance').textContent = parseInt(data.wallet_balance).toLocaleString();
+
+                            // Đổi màu badge theo plan
+                            const badge = document.getElementById('vipBadge');
+                            const color = data.current_vip.badge_color;
+                            badge.style.background = color === 'red' ? '#ef4444' : color === 'blue' ? '#3b82f6' : '#ec4899';
+
+                            modal.style.display = 'flex';
+                        } else {
+                            // Không có VIP, submit form bình thường
+                            form.submit();
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        // Nếu có lỗi, submit form bình thường
+                        form.submit();
+                    }
+                });
+            });
+
+            // Xử lý nút Hủy
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                currentForm = null;
+            });
+
+            // Xử lý nút OK, đổi gói
+            confirmBtn.addEventListener('click', function() {
+                if (currentForm) {
+                    // Thêm input confirm=1
+                    const confirmInput = document.createElement('input');
+                    confirmInput.type = 'hidden';
+                    confirmInput.name = 'confirm';
+                    confirmInput.value = '1';
+                    currentForm.appendChild(confirmInput);
+                    currentForm.submit();
+                }
+            });
+
+            // Đóng modal khi click bên ngoài
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    currentForm = null;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

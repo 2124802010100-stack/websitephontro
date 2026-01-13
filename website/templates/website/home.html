@@ -1,0 +1,462 @@
+{% extends "website/base.html" %}
+{% block main-content %}
+{% load static %}
+{% load vip_tags %}
+{% load user_display %}
+
+<head>
+  <title>Rental Site</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/home-carousel.css' %}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+</head>
+<body>
+  <main class="container wrapper" role="main">
+    <div class="main-content">
+      <div class="banner">
+        <div class="filter-tabs">
+          <a href="?" class="filter-tab {% if not has_video and not sort_newest %}active{% endif %}">Tất cả</a>
+          <a href="?newest=1" class="filter-tab {% if sort_newest %}active{% endif %}">Mới đăng</a>
+          <a href="?has_video=1" class="filter-tab {% if has_video %}active{% endif %}">Có video</a>
+        </div>
+
+      </div>
+
+      <!-- Tin đăng mới cập nhật (AI Recommendations) -->
+      {% if recommended_posts %}
+      <div style="background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 0;">
+            TIN ĐĂNG GỢI Ý
+          </h2>
+
+          <!-- Navigation buttons -->
+          <div style="display: flex; gap: 8px;">
+            <button id="prevRecommended" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #f97316; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+              <span style="font-size: 20px; font-weight: bold;">‹</span>
+            </button>
+            <button id="nextRecommended" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #f97316; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+              <span style="font-size: 20px; font-weight: bold;">›</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="position: relative; overflow: hidden; padding: 0 12px;">
+          <div id="recommendedCarousel" style="display: flex; transition: transform 0.3s ease-in-out; gap: 12px;">
+            {% for rec_post in recommended_posts %}
+            <div style="flex: 0 0 calc(33.333% - 8px); min-width: calc(33.333% - 8px);">
+              <a href="{% url 'post_detail' rec_post.id %}" style="text-decoration: none; color: inherit;">
+                <div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; transition: all 0.3s; background: white;">
+                  <!-- Hình ảnh -->
+                  <div style="position: relative; padding-top: 50%; overflow: hidden; background: #f1f5f9;">
+                    {% with rec_post.images.first as first_image %}
+                      {% if first_image %}
+                        <img src="{{ first_image.image.url }}"
+                             alt="{{ rec_post.title }}"
+                             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+                      {% else %}
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                          <span class="material-icons" style="font-size: 36px;">image</span>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+
+                    <!-- Badge số ảnh -->
+                    <div style="position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; display: flex; align-items: center; gap: 3px;">
+                      <span class="material-icons" style="font-size: 12px;">photo_camera</span>
+                      {{ rec_post.images.count }}
+                    </div>
+
+                    <!-- Badge Chính chủ -->
+                    {% if rec_post.owner.role == 'landlord' %}
+                    <div style="position: absolute; top: 0; left: 0; background: #dc2626; color: white; padding: 4px 8px; border-bottom-right-radius: 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">
+                      Chính chủ
+                    </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Nội dung -->
+                  <div style="padding: 10px;">
+                    <!-- Rating stars -->
+                    {% vip_star_count rec_post.user as rec_stars %}
+                    {% if rec_stars and rec_stars|add:0 > 0 %}
+                    <div style="margin-bottom: 4px; color: #fbbf24; font-size: 12px;">
+                      {% for _ in "x"|rjust:rec_stars %}★{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Tiêu đề -->
+                    {% vip_style_color rec_post.user as rec_vip_color %}
+                    <h5 style="font-size: 13px; font-weight: 600; color: {% if rec_vip_color %}{{ rec_vip_color }}{% else %}#2563eb{% endif %}; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; min-height: 34px;">
+                      {{ rec_post.title }}
+                    </h5>
+
+                    <!-- Giá -->
+                    <p style="font-size: 14px; font-weight: 700; color: #16a34a; margin-bottom: 4px;">
+                      {{ rec_post.price|floatformat:0 }} triệu/tháng
+                    </p>
+
+                    <!-- Diện tích -->
+                    <div style="font-size: 12px; color: #64748b; margin-bottom: 3px;">
+                      {{ rec_post.area }} m²
+                    </div>
+
+                    <!-- Địa chỉ -->
+                    <div style="font-size: 12px; color: #1e293b; font-weight: 500;">
+                      {{ rec_post.district.name|default:"--" }}, {{ rec_post.province.name|default:"--" }}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+
+      {% endif %}
+
+      {% if show_recommendations %}
+      <!-- Hiển thị thông báo khi đang xem gợi ý AI -->
+      <div class="alert alert-info my-3">
+        <i class="fas fa-magic"></i>
+        <strong>Đề xuất thông minh:</strong> Các phòng trọ dưới đây được AI chọn lọc dựa trên sở thích và hành vi của bạn.
+      </div>
+      {% endif %}
+
+      {% for post in page_obj %}
+
+      {% if forloop.counter <= 5 %}
+      <!-- Layout cho 5 bài đầu tiên -->
+      <article class="rental-card">
+        <section class="image-gallery">
+          {% with post.images.all|slice:":4" as images %}
+          {% with post.videos.all|slice:":4" as videos %}
+          {% with images|length|add:videos|length as total_items %}
+          {% if images|length > 0 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 1 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 2 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 3 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.3.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.3.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% for vid in videos %}
+            <div class="image-gallery-item">
+              <a href="{{ vid.video.url }}" data-lightbox="gallery{{ post.id }}" data-type="video/mp4">
+                <video muted autoplay loop>
+                  <source src="{{ vid.video.url }}" type="video/mp4">
+                </video>
+              </a>
+            </div>
+          {% endfor %}
+          {% endwith %}
+          {% endwith %}
+          {% endwith %}
+          {% if total_items > 4 %}
+            <div class="photo-count">
+              <span class="material-icons">photo</span>
+              +{{ total_items|add:-4 }}
+            </div>
+          {% endif %}
+        </section>
+        <section class="content">
+          <div class="title-section">
+            <h2 class="title">
+  <a href="{% url 'post_detail' post.id %}" style="color:{% vip_style_color post.user %}">{{ post.title }}</a>
+</h2>
+            <div class="stars">
+              {% vip_star_count post.user as stars %}
+              {% for _ in "x"|rjust:stars %}
+                <span class="material-icons">star</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="price-info">
+            <div class="price">{{ post.price|floatformat:0 }}.000.000 triệu/tháng</div>
+            <div class="area">{{ post.area }} m²</div>
+            <div class="location">{{ post.address }}</div>
+          </div>
+          <p class="description">{{ post.description|truncatewords:20 }}</p>
+{% if post.features_list %}
+  <div class="mt-2 text-xs text-gray-600">
+    <strong class="block mb-1">Đặc điểm nổi bật:</strong>
+    {{ post.features_list|join:", " }}
+  </div>
+{% endif %}
+
+          <div class="contact-row">
+            <div class="contact-info">
+              <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+              <div class="contact-details">
+                <span class="contact-name">{{ post.user|display_name }}</span>
+                 <span class="contact-time">{{ post.created_at|timesince_vi }} trước</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <button class="phone-button">
+                <span class="material-icons">phone</span>
+                {{ post.phone_number|default:post.user.customerprofile.phone|default:"096176889" }}
+              </button>
+     <span
+  class="material-icons favorite-icon {% if post.id in saved_ids %}saved{% endif %}"
+  data-post-id="{{ post.id }}"
+  style="cursor:pointer; color:{% if post.id in saved_ids %}#dc3545{% else %}#ccc{% endif %};">
+  {% if post.id in saved_ids %}favorite{% else %}favorite_border{% endif %}
+</span>
+
+            </div>
+          </div>
+        </section>
+      </article>
+      {% else %}
+      <!-- Layout cho 5 bài sau -->
+      <article class="rental-card alternate-layout">
+        <section class="image-gallery alternate-gallery">
+          {% with post.images.all|slice:":3" as images %}
+          {% if images|length > 0 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 1 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 2 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% endwith %}
+        </section>
+        <section class="content alternate-content">
+          <div class="title-section">
+            <h2 class="title">
+  <a href="{% url 'post_detail' post.id %}" style="color:{% vip_style_color post.user %}">{{ post.title }}</a>
+</h2>
+
+            <div class="stars">
+              {% vip_star_count post.user as stars2 %}
+              {% for _ in "x"|rjust:stars2 %}
+                <span class="material-icons">star</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="price-info">
+            <div class="price">{{ post.price }} triệu/tháng</div>
+            <div class="area">{{ post.area }} m²</div>
+          </div>
+          <div class="location">
+            <span class="material-icons" style="font-size:16px;">location_on</span>
+            {{ post.address }}
+          </div>
+          <p class="description">{{ post.description|truncatewords:20 }}</p>
+          <div class="contact-row">
+            <div class="contact-info">
+              <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+              <div>
+                <span class="contact-name">{{ post.user|display_name }}</span>
+                <div class="contact-time">{{ post.created_at|timesince }} trước</div>
+              </div>
+            </div>
+            <button class="phone-button">
+              <span class="material-icons" style="font-size:16px;">phone</span>
+              {{ post.phone_number|default:"0983230272" }}
+            </button>
+      <span
+  class="material-icons favorite-icon {% if post.id in saved_ids %}saved{% endif %}"
+  data-post-id="{{ post.id }}">
+  {% if post.id in saved_ids %}favorite{% else %}favorite_border{% endif %}
+</span>
+          </div>
+        </section>
+      </article>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <h3>Xem theo khoảng giá</h3>
+        <div class="price-filter">
+          <a href="?price=0-1000000">Dưới 1 triệu</a>
+          <a href="?price=1000000-2000000">Từ 1 - 2 triệu</a>
+          <a href="?price=2000000-3000000">Từ 2 - 3 triệu</a>
+          <a href="?price=3000000-5000000">Từ 3 - 5 triệu</a>
+          <a href="?price=5000000-7000000">Từ 5 - 7 triệu</a>
+          <a href="?price=7000000-10000000">Từ 7 - 10 triệu</a>
+          <a href="?price=10000000-15000000">Từ 10 - 15 triệu</a>
+          <a href="?price=15000000-999999999">Trên 15 triệu</a>
+
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Xem theo diện tích</h3>
+        <div class="area-filter">
+          <a href="?area=0-20">Dưới 20m²</a>
+          <a href="?area=20-30">Từ 20 - 30m²</a>
+          <a href="?area=30-50">Từ 30 - 50m²</a>
+          <a href="?area=50-70">Từ 50 - 70m²</a>
+          <a href="?area=70-90">Từ 70 - 90m²</a>
+          <a href="?area=90-999">Trên 90m²</a>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Tin mới đăng</h3>
+        {% for recent_post in recent_posts %}
+        <a href="{% url 'post_detail' recent_post.id %}" class="recent-post" style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center;">
+          <div style="width:84px;height:64px;flex:0 0 84px;overflow:hidden;border-radius:8px;background:#f3f4f6;">
+            {% with recent_post.images.first as thumb %}
+              {% if thumb %}
+                <img src="{{ thumb.image.url }}" alt="{{ recent_post.title }}" style="width:100%;height:100%;object-fit:cover;" />
+              {% endif %}
+            {% endwith %}
+          </div>
+          <div class="recent-post-content" style="flex:1;">
+            {% vip_style_color recent_post.user as recent_vip_color %}
+            <div class="recent-post-title" style="font-weight:600;line-height:1.3;color:{% if recent_vip_color %}{{ recent_vip_color }}{% else %}#1e293b{% endif %};">{{ recent_post.title|truncatechars:50 }}</div>
+            <div class="recent-post-price" style="color:#16a34a;font-weight:600;margin-top:2px;">{{ recent_post.price|floatformat:0 }} triệu/tháng</div>
+            <div class="recent-post-time" style="color:#6b7280;font-size:12px;margin-top:2px;">{{ recent_post.created_at|timesince }} trước</div>
+          </div>
+        </a>
+        {% empty %}
+        <div>Chưa có tin mới.</div>
+        {% endfor %}
+      </div>
+      <div class="sidebar-section">
+        <h3 class="sidebar-title">Bài viết mới</h3>
+        <div class="sidebar-list">
+          {% for a in articles %}
+          <a href="{% url 'article_detail' a.slug %}" class="recent-post" aria-label="{{ a.title }}">
+            {% if a.banner %}
+              <img src="{{ a.banner.url }}" alt="{{ a.title }}" />
+            {% endif %}
+            <div class="recent-post-content">
+              <div class="recent-post-title">{{ a.title|truncatechars:60 }}</div>
+              <div class="recent-post-time">{{ a.published_at|timesince }} trước</div>
+            </div>
+          </a>
+          {% empty %}
+          <p class="empty">Chưa có bài viết.</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <h3 class="sidebar-title">Có thể bạn quan tâm</h3>
+        <ul class="link-list">
+          {% for link in suggested_links %}
+          <li>
+            <a href="{{ link.url }}" target="_blank" rel="noopener" class="ext-link"><span class="chevron">›</span>{{ link.title }}</a>
+          </li>
+          {% empty %}
+          <li class="empty">Đang cập nhật.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+
+  </main>
+
+</body>
+
+<!-- Pagination -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if price_range %}&price={{ price_range }}{% endif %}{% if area_range %}&area={{ area_range }}{% endif %}{% if has_video %}&has_video=1{% endif %}{% if sort_newest %}&newest=1{% endif %}">« Trang trước</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="current">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if price_range %}&price={{ price_range }}{% endif %}{% if area_range %}&area={{ area_range }}{% endif %}{% if has_video %}&has_video=1{% endif %}{% if sort_newest %}&newest=1{% endif %}">{{ num }}</a>
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <a href="?page={{ num }}{% if price_range %}&price={{ price_range }}{% endif %}{% if area_range %}&area={{ area_range }}{% endif %}{% if has_video %}&has_video=1{% endif %}{% if sort_newest %}&newest=1{% endif %}">{{ num }}</a>
+        {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+            <span class="dots">...</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if price_range %}&price={{ price_range }}{% endif %}{% if area_range %}&area={{ area_range }}{% endif %}{% if has_video %}&has_video=1{% endif %}{% if sort_newest %}&newest=1{% endif %}">Trang sau »</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Bất động sản theo khu vực -->
+{% if featured_provinces %}
+<div style="background: white; border-radius: 12px; padding: 32px; margin: 24px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden;">
+  <h2 style="font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 24px;">
+    Cho thuê phòng theo khu vực
+  </h2>
+
+  <div class="province-carousel-wrapper" style="position: relative; height: 280px; overflow: hidden;">
+    <div class="province-carousel" id="provinceCarousel" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 12px; height: 100%; transition: transform 0.5s ease-in-out;">
+      {% for province in featured_provinces %}
+      <a href="?province={{ province.id }}"
+         class="province-card"
+         data-index="{{ forloop.counter0 }}"
+         style="position: relative; border-radius: 8px; overflow: hidden; display: block; text-decoration: none; transition: transform 0.3s; background: linear-gradient(135deg, {% if forloop.counter0 == 0 %}#667eea 0%, #764ba2 100%{% elif forloop.counter0 == 1 %}#f093fb 0%, #f5576c 100%{% elif forloop.counter0 == 2 %}#4facfe 0%, #00f2fe 100%{% elif forloop.counter0 == 3 %}#43e97b 0%, #38f9d7 100%{% else %}#fa709a 0%, #fee140 100%{% endif %});">
+        {% if province.featured_image %}
+        <img src="{{ province.featured_image.url }}"
+             alt="{{ province.name }}"
+             style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;">
+        {% endif %}
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.75), transparent); padding: {% if forloop.counter0 == 0 %}24px{% else %}16px{% endif %}; z-index: 1;">
+          <h3 style="font-size: {% if forloop.counter0 == 0 %}26px{% else %}18px{% endif %}; font-weight: 700; margin: 0 0 4px 0; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.8);">{{ province.name }}</h3>
+          <p style="font-size: {% if forloop.counter0 == 0 %}17px{% else %}14px{% endif %}; margin: 0; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{ province.post_count }} tin đăng</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Navigation dots -->
+    <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
+      {% for province in featured_provinces %}
+      <button class="carousel-dot" data-slide="{{ forloop.counter0 }}"
+              style="width: 8px; height: 8px; border-radius: 50%; border: none; background: {% if forloop.counter0 == 0 %}#1e293b{% else %}#cbd5e1{% endif %}; cursor: pointer; transition: all 0.3s;"></button>
+      {% endfor %}
+    </div>
+  </div>
+
+
+</div>
+
+{% endif %}
+
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}
+

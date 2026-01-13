@@ -1,0 +1,759 @@
+{% extends "website/base.html" %}
+
+{% block main-content %}
+<div class="edit-room-wrapper">
+  <div class="container-fluid px-3 px-md-4 py-4">
+    <div class="row g-4">
+      <!-- Left Sidebar - Post Info & Images -->
+      <div class="col-lg-5 col-xl-4">
+        <div class="sticky-sidebar">
+          <!-- Post Preview Card -->
+          <div class="preview-card">
+            <div class="preview-header">
+              <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                  <span class="preview-label">Xem trước tin đăng</span>
+                  <h4 class="preview-title">{{ room.title }}</h4>
+                </div>
+                <a href="{% url 'manage_rooms' %}" class="btn-back">
+                  <i class="bi bi-arrow-left"></i>
+                </a>
+              </div>
+
+              <div class="preview-stats">
+                <div class="stat-item">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>{{ room.province.name }}</span>
+                </div>
+                <div class="stat-item">
+                  <i class="bi bi-cash-stack"></i>
+                  <span>{{ room.price|floatformat:0 }} triệu</span>
+                </div>
+                <div class="stat-item">
+                  <i class="bi bi-rulers"></i>
+                  <span>{{ room.area }} m²</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Images Section -->
+            <div class="images-section">
+              <div class="section-title">
+                <i class="bi bi-images"></i>
+                <span>Hình ảnh ({{ room.images.count }})</span>
+              </div>
+
+              {% if room.images.all %}
+              <div class="images-grid" id="currentImages">
+                {% for image in room.images.all %}
+                <div class="image-item" id="image-{{ image.id }}">
+                  <img src="{{ image.image.url }}" alt="Room" onclick="viewImage('{{ image.image.url }}')">
+                  <button type="button" class="delete-btn" onclick="deleteImage({{ image.id }}, {{ room.id }})" title="Xóa ảnh">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="no-images">
+                <i class="bi bi-image"></i>
+                <p>Chưa có ảnh nào</p>
+              </div>
+              {% endif %}
+
+              <!-- Upload Area -->
+              <div class="upload-zone" onclick="document.getElementById('imageInput').click()">
+                <i class="bi bi-cloud-arrow-up"></i>
+                <p class="upload-text">Thêm ảnh mới</p>
+                <span class="upload-hint">Click hoặc kéo thả file vào đây</span>
+              </div>
+
+              <div id="imagePreview" class="images-grid mt-3" style="display: none;"></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+              <a href="{% url 'post_detail' room.id %}" class="action-btn view-btn" target="_blank">
+                <i class="bi bi-eye"></i>
+                <span>Xem tin</span>
+              </a>
+              <a href="{% url 'delete_room' room.id %}" class="action-btn delete-btn-link"
+                 onclick="return confirm('⚠️ Xóa tin đăng này?');">
+                <i class="bi bi-trash"></i>
+                <span>Xóa tin</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Content - Edit Form -->
+      <div class="col-lg-7 col-xl-8">
+        <div class="form-card">
+          <div class="form-header">
+            <h3 class="form-title">
+              <i class="bi bi-pencil-square"></i>
+              Chỉnh sửa thông tin
+            </h3>
+            <p class="form-subtitle">Cập nhật chi tiết phòng trọ của bạn</p>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" id="editRoomForm">
+            {% csrf_token %}
+
+            <!-- Hidden file input for images (controlled by upload zone in sidebar) -->
+            <input type="file" id="imageInput" name="images" multiple accept="image/*" onchange="previewImages(this)" style="display: none;">
+
+            <div class="form-sections">
+              {% for field in form %}
+                {% if field.name != 'images' %}
+                <div class="form-field">
+                  <label class="field-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                  </label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <small class="field-hint">{{ field.help_text }}</small>
+                  {% endif %}
+                  {% for error in field.errors %}
+                    <small class="field-error">{{ error }}</small>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <div class="form-footer">
+              <button type="submit" class="btn-save">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Lưu thay đổi</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS tùy chỉnh - Modern Purple Theme -->
+<style>
+  .edit-room-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%);
+    padding: 20px 0;
+  }
+
+  /* Left Sidebar - Preview Card */
+  .sticky-sidebar {
+    position: sticky;
+    top: 20px;
+  }
+
+  .preview-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(147, 51, 234, 0.1);
+  }
+
+  .preview-header {
+    padding: 28px;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    color: white;
+  }
+
+  .preview-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .preview-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .btn-back {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 18px;
+  }
+
+  .btn-back:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-4px);
+  }
+
+  .preview-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+  }
+
+  .stat-item i {
+    font-size: 16px;
+  }
+
+  /* Images Section */
+  .images-section {
+    padding: 24px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 16px;
+  }
+
+  .section-title i {
+    color: #9333ea;
+    font-size: 18px;
+  }
+
+  .images-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .image-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .image-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(147, 51, 234, 0.2);
+  }
+
+  .image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.3s;
+  }
+
+  .image-item:hover img {
+    transform: scale(1.05);
+  }
+
+  .image-item .delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.95);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s;
+    font-size: 14px;
+  }
+
+  .image-item:hover .delete-btn {
+    opacity: 1;
+  }
+
+  .image-item .delete-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+  }
+
+  .no-images {
+    padding: 40px;
+    text-align: center;
+    color: #9ca3af;
+  }
+
+  .no-images i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .no-images p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* Upload Zone */
+  .upload-zone {
+    margin-top: 16px;
+    padding: 32px 20px;
+    border: 2px dashed #c084fc;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .upload-zone:hover {
+    border-color: #9333ea;
+    background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+    transform: translateY(-2px);
+  }
+
+  .upload-zone i {
+    font-size: 36px;
+    color: #9333ea;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .upload-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #7e22ce;
+    margin: 0 0 4px 0;
+  }
+
+  .upload-hint {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .upload-zone input {
+    display: none;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    padding: 20px 24px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 12px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+
+  .view-btn {
+    border-color: #9333ea;
+    color: #9333ea;
+    background: white;
+  }
+
+  .view-btn:hover {
+    background: #9333ea;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .delete-btn-link {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: white;
+  }
+
+  .delete-btn-link:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Right Content - Form Card */
+  .form-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(147, 51, 234, 0.1);
+    overflow: hidden;
+  }
+
+  .form-header {
+    padding: 32px 32px 24px 32px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .form-title i {
+    color: #9333ea;
+  }
+
+  .form-subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  /* Form Sections */
+  .form-sections {
+    padding: 32px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .field-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .required {
+    color: #ef4444;
+    font-size: 16px;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.3s;
+    background: white;
+  }
+
+  .form-field input:focus,
+  .form-field select:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: #9333ea;
+    box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.1);
+  }
+
+  .form-field textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  .field-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .field-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #ef4444;
+    font-weight: 500;
+  }
+
+  /* Form Footer */
+  .form-footer {
+    padding: 24px 32px 32px 32px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .btn-save {
+    width: 100%;
+    padding: 16px 32px;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4);
+  }
+
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(147, 51, 234, 0.5);
+  }
+
+  .btn-save i {
+    font-size: 20px;
+  }
+
+  /* Modal */
+  .modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    border: none;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    color: white;
+    padding: 20px 24px;
+    border: none;
+  }
+
+  .modal-title {
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  /* Responsive */
+  @media (max-width: 991px) {
+    .sticky-sidebar {
+      position: static;
+    }
+
+    .form-sections {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .edit-room-wrapper {
+      padding: 10px 0;
+    }
+
+    .preview-header,
+    .images-section,
+    .form-header,
+    .form-sections,
+    .form-footer {
+      padding: 20px;
+    }
+
+    .images-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .image-item {
+      border-radius: 10px;
+    }
+
+    .quick-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<!-- JavaScript -->
+<script>
+  // Preview ảnh trước khi upload
+  function previewImages(input) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+
+    if (input.files && input.files.length > 0) {
+      preview.style.display = 'grid';
+
+      Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          const div = document.createElement('div');
+          div.className = 'image-item';
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="New image">
+            <span style="position: absolute; top: 8px; left: 8px; background: #10b981; color: white;
+                         padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;">
+              <i class="bi bi-plus-circle"></i> Mới
+            </span>
+          `;
+          preview.appendChild(div);
+        };
+
+        reader.readAsDataURL(file);
+      });
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  // Xem ảnh phóng to
+  function viewImage(url) {
+    document.getElementById('modalImage').src = url;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+  }
+
+  // Xóa ảnh
+  function deleteImage(imageId, roomId) {
+    if (!confirm('Bạn có chắc muốn xóa ảnh này?')) {
+      return;
+    }
+
+    fetch(`/delete-room-image/${imageId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const imageElement = document.getElementById(`image-${imageId}`);
+        imageElement.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => {
+          imageElement.remove();
+          showToast('Đã xóa ảnh thành công!', 'success');
+
+          // Check if no images left
+          const imagesContainer = document.getElementById('currentImages');
+          if (imagesContainer && imagesContainer.children.length === 0) {
+            imagesContainer.innerHTML = `
+              <div class="no-images">
+                <i class="bi bi-image"></i>
+                <p>Không còn ảnh nào</p>
+              </div>
+            `;
+          }
+        }, 300);
+      } else {
+        showToast('Lỗi: ' + (data.error || 'Không thể xóa ảnh'), 'danger');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast('Đã xảy ra lỗi khi xóa ảnh', 'danger');
+    });
+  }
+
+  // Show toast notification
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      background: ${type === 'success' ? '#10b981' : '#ef4444'};
+      color: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-weight: 600;
+      animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `
+      <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i>
+      ${message}
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.3s ease-out';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // Drag and drop
+  const uploadArea = document.querySelector('.upload-zone');
+  const imageInput = document.getElementById('imageInput');
+
+  if (uploadArea && imageInput) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => {
+        uploadArea.style.borderColor = '#7e22ce';
+        uploadArea.style.background = 'linear-gradient(135deg, #e9d5ff, #d8b4fe)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, () => {
+        uploadArea.style.borderColor = '#c084fc';
+        uploadArea.style.background = 'linear-gradient(135deg, #faf5ff, #f3e8ff)';
+      }, false);
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      imageInput.files = files;
+      previewImages(imageInput);
+    }, false);
+  }
+
+  // Animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.8); }
+    }
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+</script>
+{% endblock %}

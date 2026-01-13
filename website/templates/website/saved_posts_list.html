@@ -1,0 +1,371 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load get_item %}
+{% load vip_tags %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/saved_posts.css' %}">
+<style>
+.payment-method-option input[type="radio"]:checked + div {
+  font-weight: 700;
+}
+.payment-method-option:hover {
+  border-color: #10b981 !important;
+  background: #f0fdf4 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+.payment-method-option {
+  transition: all 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block main-content %}
+<div class="container">
+  <h1 style="margin:20px 0; font-size:1.4rem; font-weight:600; color:#333;">Danh sách tin đã lưu</h1>
+
+  {% if saved_posts %}
+    {% for item in saved_posts %}
+      {% with post=item.post %}
+      <article class="rental-card" id="saved-card-{{ post.id }}">
+        <section class="image-gallery">
+          {% with post.images.all|slice:":4" as images %}
+          {% with post.videos.all|slice:":4" as videos %}
+          {% with images|length|add:videos|length as total_items %}
+          {% if images|length > 0 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.0.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.0.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 1 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.1.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.1.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 2 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.2.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.2.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% if images|length > 3 %}
+            <div class="image-gallery-item">
+              <a href="{{ images.3.image.url }}" data-lightbox="gallery{{ post.id }}">
+                <img src="{{ images.3.image.url }}" alt="Ảnh phòng trọ">
+              </a>
+            </div>
+          {% endif %}
+          {% for vid in videos %}
+            <div class="image-gallery-item">
+              <a href="{{ vid.video.url }}" data-lightbox="gallery{{ post.id }}" data-type="video/mp4">
+                <video muted autoplay loop>
+                  <source src="{{ vid.video.url }}" type="video/mp4">
+                </video>
+              </a>
+            </div>
+          {% endfor %}
+          {% endwith %}
+          {% endwith %}
+          {% endwith %}
+          {% if total_items > 4 %}
+            <div class="photo-count">
+              <span class="material-icons">photo</span>
+              +{{ total_items|add:-4 }}
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="content">
+          <div class="title-section">
+            <h2 class="title">
+              <a href="{% url 'post_detail' post.id %}" style="color:{% vip_style_color post.user %}">{{ post.title }}</a>
+            </h2>
+            <div class="stars">
+              {% vip_star_count post.user as stars %}
+              {% for _ in "x"|rjust:stars %}
+                <span class="material-icons">star</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="price-info">
+            <div class="price">{{ post.price|floatformat:0 }}.000.000 triệu/tháng</div>
+            <div class="area">{{ post.area }} m²</div>
+            <div class="location">{{ post.address }}</div>
+          </div>
+
+          <p class="description">{{ post.description|truncatewords:20 }}</p>
+          {% if post.features_list %}
+            <div class="mt-2 text-xs text-gray-600">
+              <strong class="block mb-1">Đặc điểm nổi bật:</strong>
+              {{ post.features_list|join:", " }}
+            </div>
+          {% endif %}
+
+          <div class="contact-row">
+            <div class="contact-info">
+              <div class="avatar">{% with name=post.user|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+              <div class="contact-details">
+                <span class="contact-name">{{ post.user|display_name }}</span>
+                 <span class="contact-time">{{ post.created_at|timesince_vi }} trước</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <button class="phone-button">
+                <span class="material-icons">phone</span>
+                {{ post.phone_number|default:post.user.customerprofile.phone|default:"096176889" }}
+              </button>
+              <span
+                class="material-icons favorite-icon saved"
+                title="Bỏ lưu"
+                data-post-id="{{ post.id }}"
+                style="cursor:pointer; color:#dc3545;">favorite</span>
+            </div>
+          </div>
+
+          <div class="rental-request-row" style="margin-top:16px; padding:12px; background:#f8fafc; border-radius:8px">
+            {% with req=rental_requests|get_item:post.id %}
+              {% if not req or req.is_cancelled or req.is_declined %}
+                <form method="post" action="{% url 'send_rental_request' post.id %}" style="display:inline">
+                  {% csrf_token %}
+                  <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.3s; box-shadow:0 2px 4px rgba(59,130,246,0.2)" onmouseover="this.style.background='#2563eb'; this.style.boxShadow='0 4px 8px rgba(59,130,246,0.3)'" onmouseout="this.style.background='#3b82f6'; this.style.boxShadow='0 2px 4px rgba(59,130,246,0.2)'">
+                    <i class="fas fa-home" style="margin-right:6px"></i>Chọn phòng để thuê
+                  </button>
+                </form>
+                {% if req and req.is_cancelled %}
+                  <span style="display:inline-block; margin-left:12px; background:#6b7280; color:white; padding:6px 12px; border-radius:12px; font-size:13px; font-weight:500">
+                    <i class="fas fa-times-circle" style="margin-right:4px"></i>Yêu cầu đã bị hủy
+                  </span>
+                {% elif req and req.is_declined %}
+                  <span style="display:inline-block; margin-left:12px; background:#ef4444; color:white; padding:6px 12px; border-radius:12px; font-size:13px; font-weight:500">
+                    <i class="fas fa-ban" style="margin-right:4px"></i>Phòng đã bị từ chối cho thuê
+                  </span>
+                {% endif %}
+              {% else %}
+                {% if req.is_pending %}
+                  {% if req.deposit_status == 'requested' %}
+                    <div style="background:#fff7ed; border:1px solid #fed7aa; padding:12px; border-radius:8px; margin-bottom:10px">
+                      <div style="color:#9a3412; font-weight:600; margin-bottom:8px">
+                        <i class="fas fa-coins" style="margin-right:6px; color:#f59e0b"></i>Chủ trọ yêu cầu bạn đặt cọc số tiền {{ req.deposit_amount|floatformat:0 }} VNĐ
+                      </div>
+                      <div style="display:flex; gap:10px; flex-wrap:wrap">
+                        {% if req.deposit_payment_url %}
+                        <a href="{{ req.deposit_payment_url }}" target="_blank" style="background:#d82d8b; color:white; border:none; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">
+                          <i class="fas fa-qrcode" style="margin-right:6px"></i>Quét mã QR MoMo
+                        </a>
+                        {% endif %}
+                        <form method="post" action="{% url 'customer_cancel_deposit' req.id %}">
+                          {% csrf_token %}
+                          <button type="submit" style="background:#ef4444; color:white; border:none; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
+                            <i class="fas fa-ban" style="margin-right:6px"></i>Hủy đặt cọc
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  {% else %}
+                    <span style="display:inline-block; background:#fbbf24; color:white; padding:8px 16px; border-radius:12px; font-size:14px; font-weight:500">
+                      <i class="fas fa-clock" style="margin-right:6px"></i>Đã gửi yêu cầu - Chờ chủ trọ xác nhận
+                    </span>
+                  {% endif %}
+                {% elif req.is_accepted %}
+                  <div style="background:#d1fae5; padding:12px; border-radius:8px; margin-bottom:10px">
+                    <div style="color:#065f46; font-weight:600; margin-bottom:8px">
+                      <i class="fas fa-check-circle" style="margin-right:6px; color:#10b981"></i>Chủ trọ đã chấp nhận, hãy xác nhận thuê để hoàn tất.
+                    </div>
+                    <form method="post" action="{% url 'confirm_rental_request' req.id %}" style="display:inline">
+                      {% csrf_token %}
+                      <button type="submit" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.3s; box-shadow:0 2px 4px rgba(16,185,129,0.2)" onmouseover="this.style.background='#059669'; this.style.boxShadow='0 4px 8px rgba(16,185,129,0.3)'" onmouseout="this.style.background='#10b981'; this.style.boxShadow='0 2px 4px rgba(16,185,129,0.2)'">
+                        <i class="fas fa-check-double" style="margin-right:6px"></i>Xác nhận thuê phòng
+                      </button>
+                    </form>
+                  </div>
+                {% elif req.is_confirmed %}
+                  <div style="margin-bottom:10px">
+                    <span style="display:inline-block; background:#3b82f6; color:white; padding:8px 16px; border-radius:12px; font-size:14px; font-weight:500">
+                      <i class="fas fa-check-circle" style="margin-right:6px"></i>Bạn đã xác nhận thuê phòng này
+                    </span>
+                    {% if req.deposit_status == 'paid' %}
+                    <br>
+                    <a href="{% url 'view_deposit_bill' req.id %}" target="_blank" style="background:#8b5cf6; color:white; padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600; margin-top:8px; display:inline-block; text-decoration:none; transition:all 0.3s; box-shadow:0 2px 6px rgba(139,92,246,0.3)">
+                      <i class="fas fa-file-invoice" style="margin-right:6px"></i>Xem Bill đặt cọc
+                    </a>
+                    {% endif %}
+                  </div>
+                  </span>
+                {% endif %}
+              {% endif %}
+            {% endwith %}
+          </div>
+        </section>
+      </article>
+      {% endwith %}
+    {% endfor %}
+  {% else %}
+    <div style="padding:20px; background:#fff; border-radius:8px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      Bạn chưa lưu tin nào.
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal xác nhận đặt cọc -->
+<div id="depositConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; padding:32px; max-width:520px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="width:80px; height:80px; background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+        <i class="fas fa-lock" style="font-size:36px; color:#f59e0b;"></i>
+      </div>
+      <h3 style="margin:0 0 8px 0; font-size:22px; font-weight:700; color:#1f2937;">💰 Thanh toán đặt cọc</h3>
+      <p style="margin:0; color:#6b7280; font-size:14px;">Chọn phương thức thanh toán</p>
+    </div>
+
+    <div style="background:#fef3c7; padding:16px; border-radius:12px; margin-bottom:24px; border-left:4px solid #f59e0b;">
+      <div style="font-size:13px; color:#92400e; margin-bottom:4px; font-weight:600;">Số tiền đặt cọc:</div>
+      <div style="font-size:24px; color:#92400e; font-weight:800;" id="depositAmountDisplay">0 VNĐ</div>
+    </div>
+
+    <!-- Chọn phương thức thanh toán -->
+    <div style="margin-bottom:24px;">
+      <label style="display:block; margin-bottom:12px; font-weight:600; color:#374151; font-size:14px;">
+        <i class="fas fa-credit-card" style="margin-right:6px; color:#6b7280;"></i>Phương thức thanh toán
+      </label>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <!-- MoMo -->
+        <label class="payment-method-option" style="display:flex; align-items:center; padding:16px; border:2px solid #d82d8b; border-radius:12px; cursor:pointer; background:#fdf2f8; transition:all 0.3s;">
+          <input type="radio" name="payment_method" value="momo" checked style="margin-right:12px; width:18px; height:18px; cursor:pointer;">
+          <div style="flex:1;">
+            <div style="font-weight:600; color:#1f2937; margin-bottom:4px;">
+              <i class="fab fa-cc-mastercard" style="color:#d82d8b; margin-right:8px;"></i>Ví MoMo
+            </div>
+            <div style="font-size:12px; color:#6b7280;">Quét mã QR để thanh toán qua MoMo</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Form thanh toán -->
+    <form id="depositConfirmForm" method="post" action="" onsubmit="return handleDepositPayment(event);">
+      {% csrf_token %}
+      <input type="hidden" name="payment_method" id="selectedPaymentMethod" value="momo">
+
+      <div style="display:flex; gap:12px;">
+        <button type="button" onclick="closeDepositConfirmModal()"
+          style="flex:1; background:#f3f4f6; color:#374151; border:none; padding:14px; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s;"
+          onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+          <i class="fas fa-times" style="margin-right:6px"></i>Hủy
+        </button>
+        <button type="submit" id="submitPaymentBtn"
+          style="flex:1; background:linear-gradient(135deg, #d82d8b 0%, #b91c7c 100%); color:white; border:none; padding:14px; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 12px rgba(216,45,139,0.3);"
+          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(216,45,139,0.4)'"
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(216,45,139,0.3)'">
+          <i class="fas fa-check-circle" style="margin-right:6px"></i>Thanh toán qua MoMo
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentRequestId = null;
+
+function handleDepositPayment(event) {
+  event.preventDefault();
+
+  // Luôn redirect tới MoMo payment gateway
+  window.location.href = `/rental-request/${currentRequestId}/deposit/payment/momo/`;
+  return false;
+}
+
+function openDepositConfirmModal(requestId, amount) {
+  currentRequestId = requestId;
+  const modal = document.getElementById('depositConfirmModal');
+  const amountDisplay = document.getElementById('depositAmountDisplay');
+
+  // Format amount with thousand separators
+  const formattedAmount = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  amountDisplay.textContent = formattedAmount + ' VNĐ';
+
+  // Show modal
+  modal.style.display = 'flex';
+}
+
+function closeDepositConfirmModal() {
+  const modal = document.getElementById('depositConfirmModal');
+  modal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('depositConfirmModal');
+  if (e.target === modal) {
+    closeDepositConfirmModal();
+  }
+});
+
+// Close on ESC key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDepositConfirmModal();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+function getCookie(name){
+  let v=null; if(document.cookie && document.cookie!==''){
+    const arr=document.cookie.split(';');
+    for(let i=0;i<arr.length;i++){ const c=arr[i].trim(); if(c.substring(0,name.length+1)===(name+'=')){ v=decodeURIComponent(c.substring(name.length+1)); break; } }
+  }
+  return v;
+}
+const csrftoken = getCookie('csrftoken');
+
+document.querySelectorAll('.favorite-icon.saved').forEach(icon=>{
+  icon.addEventListener('click',()=>{
+    const postId = icon.dataset.postId;
+    // Optimistic UI: đổi icon ngay
+    const prevText = icon.textContent;
+    const prevColor = icon.style.color;
+    icon.textContent = 'favorite_border';
+    icon.style.color = '#ccc';
+
+    fetch(`/saved/toggle/${postId}/`,{
+      method:'POST',
+      headers:{'X-CSRFToken':csrftoken,'X-Requested-With':'XMLHttpRequest'},
+      credentials:'same-origin'
+    })
+      .then(async r=>{ const data=await r.json().catch(()=>({})); return {ok:r.ok,status:r.status,data}; })
+      .then(res=>{
+        if(res.ok && (res.data.status==='removed' || res.data.status==='saved')){
+          const card = document.getElementById(`saved-card-${postId}`);
+          if(card) card.remove();
+          if(document.querySelectorAll('.rental-card').length===0){
+            const container=document.querySelector('.container');
+            const empty=document.createElement('div');
+            empty.style.cssText='padding:20px;background:#fff;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
+            empty.textContent='Bạn chưa lưu tin nào.';
+            container.appendChild(empty);
+          }
+        } else {
+          // revert UI
+          icon.textContent = prevText; icon.style.color = prevColor;
+          alert('Không gỡ lưu được (mã '+res.status+'). Vui lòng đăng nhập lại hoặc thử lại sau.');
+        }
+      })
+      .catch(()=>{ icon.textContent = prevText; icon.style.color = prevColor; alert('Không gỡ lưu được, thử lại sau.'); });
+  });
+});
+});
+</script>
+{% endblock %}

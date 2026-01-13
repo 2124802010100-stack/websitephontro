@@ -1,0 +1,375 @@
+{% extends "website/base.html" %}
+{% load user_display %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Chat - {{ post.title }}{% endblock %}
+
+{% block main-content %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/chat.css' %}?v=12">
+
+<div class="chat-page-wrap">
+<div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+        <div class="chat-info">
+            <div class="chat-title">{{ post.title }}</div>
+            <div class="chat-subtitle">
+                {% if request.user == thread.owner %}
+                    Chat với {{ thread.guest.get_full_name|default:thread.guest.username }}
+                {% else %}
+                    Chat với {{ thread.owner.get_full_name|default:thread.owner.username }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="chat-actions">
+            <a href="{% url 'post_detail' post.id %}" class="btn-back">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            <a href="{% url 'my_chats' %}" class="btn-chats">
+                <span class="material-icons">chat</span>
+            </a>
+            <form action="{% url 'delete_thread' thread.id %}" method="post" style="display:inline">
+                {% csrf_token %}
+                <button class="btn-chats" style="background:#ef4444" type="submit">
+                    <span class="material-icons">delete</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="messages-container" id="messages-container">
+        {% for message in messages %}
+        <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}" data-message-id="{{ message.id }}">
+            <div class="message-content">
+                {% if message.is_deleted %}
+                    <div class="message-text deleted-message">
+                        <span class="material-icons">delete</span>
+                        Tin nhắn đã được thu hồi
+                    </div>
+                {% else %}
+                    {% if message.image %}
+                        <div class="message-image">
+                            <img src="{{ message.image.url }}" alt="Hình ảnh" style="max-width: 300px; border-radius: 8px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                        </div>
+                    {% endif %}
+                    {% if message.content %}
+                        <div class="message-text">{{ message.content }}</div>
+                    {% endif %}
+                {% endif %}
+                <div class="message-time">
+                    {{ message.created_at|date:"H:i" }}
+                    {% if message.sender == request.user and not message.is_deleted %}
+                        <span class="read-receipt">{% if message.is_read %}Đã xem{% else %}Đã gửi{% endif %}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <div class="no-messages">
+            <span class="material-icons">chat_bubble_outline</span>
+            <p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Input Area -->
+    <div class="message-input-container">
+        <form id="chat-form" class="message-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="file" id="image-input" accept="image/*" style="display: none;">
+                <button type="button" class="attach-button" id="attach-button" title="Gửi hình ảnh">
+                    <span class="material-icons">image</span>
+                </button>
+                <input type="text" id="message-input" class="message-input"
+                       placeholder="Nhập tin nhắn..." autocomplete="off">
+                <button type="submit" class="send-button" id="send-button">
+                    <span class="material-icons">send</span>
+                </button>
+            </div>
+            <div id="image-preview" style="display: none; padding: 10px; background: #f0f0f0; border-radius: 8px; margin-top: 8px; position: relative;">
+                <img id="preview-img" src="" style="max-width: 150px; max-height: 150px; border-radius: 6px;">
+                <button type="button" id="remove-image" style="position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-icons" style="font-size: 16px;">close</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInput = document.getElementById('message-input');
+    const chatForm = document.getElementById('chat-form');
+    const sendButton = document.getElementById('send-button');
+
+    // WebSocket connection
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const threadId = "{{ thread.id }}";
+    const chatSocket = new WebSocket(
+        wsScheme + '://' + window.location.host + '/ws/chat/' + threadId + '/'
+    );
+
+    // Scroll to bottom
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Add message to UI
+    function addMessage(content, sender, isOwn) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isOwn ? 'message-sent' : 'message-received'}`;
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-text">${content}</div>
+                <div class="message-time">${timeString}</div>
+            </div>
+        `;
+
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // WebSocket event handlers
+    chatSocket.onopen = function(e) {
+        console.log('WebSocket connected');
+    };
+
+    chatSocket.onmessage = function(e) {
+        console.log('Received message:', e.data);
+        const data = JSON.parse(e.data);
+        if (data.type === 'chat.message') {
+            const message = data.message;
+            const isOwn = message.sender_id === {{ request.user.id }};
+            addMessage(message.content, message.sender, isOwn);
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly', e);
+        // Có thể thêm thông báo lỗi cho user
+    };
+
+    chatSocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+    };
+
+    // Image upload handling
+    const imageInput = document.getElementById('image-input');
+    const attachButton = document.getElementById('attach-button');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const removeImageBtn = document.getElementById('remove-image');
+
+    attachButton.addEventListener('click', () => {
+        imageInput.click();
+    });
+
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    removeImageBtn.addEventListener('click', () => {
+        imageInput.value = '';
+        imagePreview.style.display = 'none';
+        previewImg.src = '';
+    });
+
+    // Send message
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        const hasImage = imageInput.files.length > 0;
+
+        if (message === '' && !hasImage) return;
+
+        console.log('Sending message:', message);
+
+        // Disable input while sending
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        attachButton.disabled = true;
+
+        // If there's an image, send via HTTP POST
+        if (hasImage) {
+            const formData = new FormData();
+            formData.append('content', message);
+            formData.append('image', imageInput.files[0]);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch('{% url "send_chat_message" thread.id %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Clear inputs
+                    messageInput.value = '';
+                    imageInput.value = '';
+                    imagePreview.style.display = 'none';
+                    previewImg.src = '';
+
+                    // Reload messages or add via websocket broadcast
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Không thể gửi tin nhắn'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Lỗi khi gửi hình ảnh');
+            })
+            .finally(() => {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                attachButton.disabled = false;
+            });
+        } else {
+            // Send text-only via WebSocket
+            const messageData = {
+                'type': 'chat.message',
+                'content': message,
+                'timestamp': new Date().toISOString()
+            };
+
+            console.log('Sending data:', messageData);
+
+            chatSocket.send(JSON.stringify(messageData));
+
+            messageInput.value = '';
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            attachButton.disabled = false;
+            messageInput.focus();
+        }
+    }
+
+    // Form submission
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+
+    // Enter key to send (only if no image selected)
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Auto focus input
+    messageInput.focus();
+
+    // Scroll to bottom on load
+    scrollToBottom();
+
+    // Toggle history visibility
+    const toggleHistoryBtn = document.getElementById('toggle-history-btn');
+    let historyVisible = true; // Mặc định hiển thị
+
+    toggleHistoryBtn.addEventListener('click', function() {
+        historyVisible = !historyVisible;
+
+        if (historyVisible) {
+            messagesContainer.style.display = 'block';
+            toggleHistoryBtn.style.background = 'rgba(255,255,255,0.4)';
+            toggleHistoryBtn.title = 'Ẩn lịch sử chat';
+            scrollToBottom();
+        } else {
+            messagesContainer.style.display = 'none';
+            toggleHistoryBtn.style.background = 'rgba(255,255,255,0.2)';
+            toggleHistoryBtn.title = 'Xem lịch sử chat';
+        }
+    });
+
+    // Set initial state
+    toggleHistoryBtn.style.background = 'rgba(255,255,255,0.4)';
+    toggleHistoryBtn.title = 'Ẩn lịch sử chat';
+
+    // Xử lý xóa tin nhắn
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-message-btn')) {
+            const btn = e.target.closest('.delete-message-btn');
+            const messageId = btn.dataset.messageId;
+
+            if (confirm('Bạn có chắc muốn xóa tin nhắn này?')) {
+                deleteMessage(messageId);
+            }
+        }
+    });
+
+    // Hàm xóa tin nhắn
+    function deleteMessage(messageId) {
+        fetch(`/delete-message/${messageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Cập nhật UI để hiển thị tin nhắn đã xóa
+                const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageElement) {
+                    const messageText = messageElement.querySelector('.message-text');
+                    const deleteBtn = messageElement.querySelector('.delete-message-btn');
+
+                    messageText.innerHTML = `
+                        <span class="material-icons">delete</span>
+                        Tin nhắn đã được thu hồi
+                    `;
+                    messageText.classList.add('deleted-message');
+
+                    if (deleteBtn) {
+                        deleteBtn.remove();
+                    }
+                }
+            } else {
+                alert('Lỗi khi xóa tin nhắn: ' + (data.message || 'Không xác định'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Lỗi khi xóa tin nhắn');
+        });
+    }
+    // Xóa cuộc trò chuyện
+    document.getElementById('delete-thread').addEventListener('click', function(){
+        if(!confirm('Xóa toàn bộ cuộc trò chuyện này?')) return;
+        fetch(`/chat/{{ thread.id }}/delete/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(r=>r.json()).then(d=>{
+            if(d.status==='success') window.location.href = '{% url 'my_chats' %}';
+            else alert(d.message||'Lỗi xóa thread');
+        }).catch(()=> alert('Lỗi mạng'))
+    });
+});
+</script>
+</div>
+
+{% endblock %}
+
+

@@ -1,0 +1,137 @@
+{% extends 'website/base.html' %}
+{% load user_display %}
+{% load static %}
+{% load vip_tags %}
+{% load review_tags %}
+
+{% block main-content %}
+<div class="reviews-wrapper">
+  <div class="reviews-header">
+    <div class="avatar-lg">
+      {% with name=landlord|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}
+    </div>
+    <div class="header-info">
+      <h1>Đánh giá về {{ landlord|display_name }}</h1>
+      <div class="stats-row">
+        <span class="rating-pill">{{ avg }}/5 ⭐</span>
+        <span class="count-pill">{{ total }} đánh giá</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="reviews-scroll">
+    {% if reviews %}
+      {% for r in reviews %}
+        <div class="review-card" data-review-id="{{ r.id }}">
+          <div class="review-top">
+            <div class="avatar-sm">{% with name=r.reviewer|display_name %}{{ name|first|default:"?"|upper }}{% endwith %}</div>
+            <div class="reviewer-info">
+              <div class="name">{{ r.reviewer|display_name }}</div>
+              <div class="time">📅 {{ r.created_at|timesince_vi }} trước</div>
+            </div>
+            <div class="score">
+              <span class="stars">{% for _ in "x"|rjust:r.rating %}★{% endfor %}</span>
+              <span class="value">{{ r.rating }}/5</span>
+            </div>
+          </div>
+          {% if r.comment %}
+            <div class="comment-box">
+              <div class="label">💬 Nhận xét</div>
+              <div class="comment-text">"{{ r.comment }}"</div>
+            </div>
+          {% else %}
+            <div class="comment-empty">Người dùng chỉ chấm điểm, không để lại nhận xét</div>
+          {% endif %}
+          {% if can_delete_reviews %}
+            <div class="delete-hint">Giữ để xoá</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="icon">⭐</div>
+        <div class="title">Chưa có đánh giá nào</div>
+        <div class="subtitle">Hãy là người đầu tiên đánh giá chủ trọ này!</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="back-row">
+    <a href="javascript:history.back()" class="back-btn">← Quay lại</a>
+  </div>
+</div>
+
+<style>
+.reviews-wrapper {max-width:1000px;margin:40px auto;padding:0 20px;font-family:Inter,system-ui,sans-serif;}
+.reviews-header {display:flex;gap:20px;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px 28px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px;}
+.avatar-lg {width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:700;font-size:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(59,130,246,.3);}
+.header-info h1 {font-size:24px;margin:0 0 10px;font-weight:700;color:#111827;}
+.stats-row {display:flex;gap:12px;align-items:center;}
+.rating-pill {background:#fef3c7;color:#92400e;padding:6px 14px;border-radius:10px;font-weight:600;font-size:14px;box-shadow:0 2px 4px rgba(245,158,11,.25);}
+.count-pill {font-size:14px;color:#6b7280;font-weight:500;}
+.reviews-scroll {max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-right:4px;}
+.reviews-scroll::-webkit-scrollbar {width:8px;}
+.reviews-scroll::-webkit-scrollbar-track {background:#f1f5f9;border-radius:10px;}
+.reviews-scroll::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:10px;}
+.reviews-scroll::-webkit-scrollbar-thumb:hover {background:#94a3b8;}
+.review-card {background:#fff;border:none;border-radius:12px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.06);transition:.2s;position:relative;}
+.review-card:hover {box-shadow:0 6px 18px rgba(0,0,0,.12);}
+.review-top {display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.avatar-sm {width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;}
+.reviewer-info {flex:1;}
+.reviewer-info .name {font-weight:600;font-size:15px;color:#111827;margin-bottom:2px;}
+.reviewer-info .time {font-size:12px;color:#6b7280;}
+.score {background:#fef3c7;padding:6px 12px;border-radius:8px;font-weight:700;color:#92400e;display:flex;gap:6px;align-items:center;}
+.score .stars {font-size:14px;}
+.score .value {font-size:13px;}
+.comment-box {background:#f9fafb;padding:14px 16px;border-radius:8px;}
+.comment-box .label {font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.comment-text {font-size:14px;line-height:1.55;color:#374151;}
+.comment-empty {background:#f9fafb;padding:12px;border-radius:8px;text-align:center;color:#94a3b8;font-style:italic;font-size:13px;}
+.delete-hint {position:absolute;top:8px;right:12px;font-size:11px;color:#9ca3af;opacity:0;transition:.2s;background:#f1f5f9;padding:4px 8px;border-radius:6px;}
+.review-card:hover .delete-hint {opacity:1;}
+.review-card.deleting {opacity:.4;}
+.empty-state {background:#f9fafb;border:2px dashed #d1d5db;border-radius:12px;padding:48px 32px;text-align:center;}
+.empty-state .icon {font-size:56px;opacity:.5;margin-bottom:12px;}
+.empty-state .title {font-size:18px;font-weight:600;color:#374151;margin-bottom:6px;}
+.empty-state .subtitle {font-size:14px;color:#6b7280;}
+.back-row {text-align:center;margin-top:28px;}
+.back-btn {background:#3b82f6;color:#fff;padding:12px 26px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(59,130,246,.3);display:inline-flex;gap:8px;transition:.2s;}
+.back-btn:hover {background:#2563eb;transform:translateY(-2px);box-shadow:0 4px 12px rgba(59,130,246,.4);}
+@media (max-width:640px){.reviews-header{flex-direction:column;align-items:flex-start}.reviews-scroll{max-height:70vh}.review-top{flex-wrap:wrap}.score{margin-left:auto}}
+</style>
+{% if can_delete_reviews %}
+<script>
+(function(){
+  const LONG_PRESS_MS = 650;
+  function getCSRF(){
+    const m = document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';
+  }
+  document.querySelectorAll('.review-card').forEach(card=>{
+    let timer;let startPoint;
+    const start = (e)=>{
+      if(e.type==='mousedown' && e.button!==0) return;
+      startPoint = Date.now();
+      timer = setTimeout(()=>trigger(card), LONG_PRESS_MS);
+    };
+    const cancel = ()=>{clearTimeout(timer);};
+    card.addEventListener('mousedown', start);
+    card.addEventListener('touchstart', start);
+    ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>card.addEventListener(ev,cancel));
+  });
+  function trigger(card){
+    const id = card.getAttribute('data-review-id');
+    if(!id) return;
+    if(!confirm('Xóa đánh giá này?')) return;
+    card.classList.add('deleting');
+    fetch(`/reviews/delete/${id}/`,{
+      method:'POST',
+      headers:{'X-CSRFToken':getCSRF(),'X-Requested-With':'XMLHttpRequest'},
+    }).then(r=>r.json()).then(data=>{
+      if(data.status==='ok'){card.style.height=card.offsetHeight+'px';card.style.transition='opacity .3s,height .3s,margin .3s';card.style.opacity='0';setTimeout(()=>{card.remove();},300);}else{alert(data.message||'Không thể xóa');card.classList.remove('deleting');}
+    }).catch(()=>{alert('Lỗi mạng');card.classList.remove('deleting');});
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block main-content %}
+<div class="container" style="max-width: 900px; margin: 20px auto;">
+    <h2>Nhật ký xóa bài đăng</h2>
+    {% if logs %}
+    <table class="room-table" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Tiêu đề</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Thời gian</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Người xóa</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td style="padding:8px; border-bottom:1px solid #f3f4f6;">{{ log.post_title }}</td>
+                <td style="padding:8px; border-bottom:1px solid #f3f4f6;">{{ log.deleted_at|date:"d/m/Y H:i" }}</td>
+                <td style="padding:8px; border-bottom:1px solid #f3f4f6;">{{ log.deleted_by.username }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Chưa có nhật ký xóa.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+

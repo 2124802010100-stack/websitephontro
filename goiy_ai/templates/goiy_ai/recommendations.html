@@ -1,0 +1,104 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - PhongTro.NMA{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">
+        <i class="fas fa-magic"></i> {{ page_title }}
+        <small class="text-muted">- Được chọn riêng cho bạn</small>
+    </h2>
+
+    {% if recommended_posts %}
+    <div class="row">
+        {% for post in recommended_posts %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm post-card" data-post-id="{{ post.id }}">
+                {% if post.image %}
+                <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image" style="height: 200px; object-fit: cover;">
+                {% endif %}
+
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'website:room_detail' post.id %}" class="text-decoration-none text-dark">
+                            {{ post.title|truncatewords:8 }}
+                        </a>
+                    </h5>
+
+                    <p class="text-danger fw-bold mb-2">
+                        <i class="fas fa-tag"></i> {{ post.price|floatformat:0 }} VNĐ/tháng
+                    </p>
+
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ post.district.name|default:"" }}, {{ post.province.name|default:"" }}
+                    </p>
+
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-ruler-combined"></i> {{ post.area }}m²
+                    </p>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <a href="{% url 'website:room_detail' post.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> Xem chi tiết
+                        </a>
+
+                        <button class="btn btn-sm btn-outline-danger save-btn" data-post-id="{{ post.id }}">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        Chưa có gợi ý phù hợp. Hãy xem thêm các bài đăng để chúng tôi hiểu bạn hơn!
+        <br>
+        <a href="{% url 'website:home' %}" class="btn btn-primary mt-2">
+            <i class="fas fa-search"></i> Khám phá phòng trọ
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Track khi user click xem chi tiết
+document.querySelectorAll('.post-card').forEach(card => {
+    card.addEventListener('click', function(e) {
+        if (!e.target.closest('.save-btn')) {
+            const postId = this.dataset.postId;
+            // Track view (sẽ được track ở detail page)
+        }
+    });
+});
+
+// Track khi user lưu tin
+document.querySelectorAll('.save-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const postId = this.dataset.postId;
+
+        // Gọi API save (giả sử có)
+        fetch(`/goiy-ai/track/save/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            }
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  this.innerHTML = '<i class="fas fa-heart"></i>';
+                  this.classList.remove('btn-outline-danger');
+                  this.classList.add('btn-danger');
+              }
+          });
+    });
+});
+</script>
+{% endblock %}

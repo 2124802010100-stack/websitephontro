@@ -1,0 +1,30 @@
+# Django và các package cơ bản
+Django>=4.2.10
+django-allauth>=0.57.0
+channels>=4.0.0
+widget-tweaks>=1.4.13
+django-humanize>=4.8.0
+django-jazzmin>=2.6.0
+
+# Database (PythonAnywhere hỗ trợ PostgreSQL/MySQL)
+psycopg2-binary>=2.9.0
+
+# RAG / Embeddings dependencies
+numpy<2
+sentence-transformers>=2.2.2
+torch>=2.2.0
+
+# Groq client
+groq>=0.5.0
+
+# Form/field helpers
+django-multiselectfield>=0.1.12
+PyJWT>=2.8.0
+python-dateutil>=2.9.0
+pytz>=2024.1
+
+# WSGI server cho production
+gunicorn>=21.2.0
+
+# Whitenoise để serve static files
+whitenoise>=6.6.0

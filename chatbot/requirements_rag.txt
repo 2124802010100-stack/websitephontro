@@ -1,0 +1,13 @@
+# Enhanced requirements for RAG with semantic search
+# Add these to your existing requirements.txt
+
+# Semantic embeddings (Vietnamese multilingual support)
+sentence-transformers>=2.2.0
+
+# PostgreSQL vector extension Python bindings (optional, for pgvector)
+pgvector>=0.2.0
+
+# Already required by sentence-transformers, but explicit here:
+# torch>=2.0.0
+# transformers>=4.30.0
+# numpy>=1.21.0
