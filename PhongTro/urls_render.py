@@ -14,8 +14,9 @@ urlpatterns = [
     path('admin/moderation/reject/<int:post_id>/', admin.site.admin_view(website_views.reject_post), name='admin_reject_post'),
     path('admin/', admin.site.urls),
     path('', include('website.urls')),
-    # path('chatbot/', include('chatbot.urls')),  # Disabled for Render free tier
-    path('goiy-ai/', include('goiy_ai.urls')),
+    # Disabled for Render free tier (needs numpy/scipy/sklearn)
+    # path('chatbot/', include('chatbot.urls')),
+    # path('goiy-ai/', include('goiy_ai.urls')),
     # django-allauth URLs
     path('accounts/', include('allauth.urls')),
 ]
