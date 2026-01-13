@@ -2,8 +2,8 @@
 Django>=4.2.10
 django-allauth>=0.57.0  # Đăng nhập bằng Google OAuth
 channels>=4.0.0
-widget-tweaks>=1.4.13
-django-humanize>=4.8.0
+django-widget-tweaks>=1.5.0
+django-humanize>=0.1.2
 
 # Database
 psycopg2-binary>=2.9.0  # PostgreSQL
